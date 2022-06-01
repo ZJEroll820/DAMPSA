@@ -1,0 +1,25 @@
+Version 1.7:
+- Changed how compression factor is computed when -ml or -mlr are given; consider insertion sites as singletons. 
+
+Version 1.6:
+- Added -mlr to enable removing of lower case letters from reference. 
+
+Version 1.5:
+- A feature added where by specifying -ml FastSP can be instructed to ignore lower case letters as not being homologous. 
+
+Version 1.4:
+- An important bug that occasionally caused incorrect TC values is fixed. 
+- version number is printed out
+
+Version 1.3:
+- A small overflow issue in outputting number of cells is fixed
+
+Version 1.2:
+- ? is now treated the same way - is
+- Extra dash characters (such as N and X) can be defined with the -c option
+- Slightly improved error reporting
+
+Version 1.1:
+- Compression Factor added
+- SPFP Added
+- There was a bug in reporting k (maximum number of non-gap characters per sequence), which is fixed now.  

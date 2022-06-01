@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>domain &mdash; DAMPSA 1.0 documentation</title>
+      <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+        <script src="../_static/jquery.js"></script>
+        <script src="../_static/underscore.js"></script>
+        <script src="../_static/doctools.js"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="../index.html" class="icon icon-home"> DAMPSA
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../API/contents.html">API reference</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">DAMPSA</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home"></a> &raquo;</li>
+          <li><a href="index.html">Module code</a> &raquo;</li>
+      <li>domain</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for domain</h1><div class="highlight"><pre>
+<span></span><span class="c1"># Author: Roll 820</span>
+
+<span class="kn">import</span> <span class="nn">uuid</span>
+<span class="kn">import</span> <span class="nn">logging</span>
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">subprocess</span>
+<span class="kn">import</span> <span class="nn">requests</span>
+<span class="kn">import</span> <span class="nn">re</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+<span class="kn">from</span> <span class="nn">Bio</span> <span class="kn">import</span> <span class="n">SeqIO</span>
+
+<span class="kn">from</span> <span class="nn">utils</span> <span class="kn">import</span> <span class="n">get_within_pair</span>
+
+
+<div class="viewcode-block" id="run_hmmscan"><a class="viewcode-back" href="../API/contents.html#domain.run_hmmscan">[docs]</a><span class="k">def</span> <span class="nf">run_hmmscan</span><span class="p">(</span><span class="n">seqs</span><span class="p">,</span> <span class="n">n_thread</span><span class="o">=</span><span class="mi">4</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Run Hmmscan for input sequences.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        seqs (dict): dictionary of :class:`Bio.SeqRecord` protein sequences.</span>
+<span class="sd">        n_thread (int): number of thread for running :command:`hmmscan`.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="s1">&#39;DAMPSA.domain&#39;</span><span class="p">)</span>
+    <span class="n">path_to_msa</span> <span class="o">=</span> <span class="s1">&#39;/Users/jefft/Desktop/BioinformaticsProject/MSA/&#39;</span>  <span class="c1"># TODO</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">seqs</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>  <span class="c1"># single record</span>
+        <span class="n">seqs</span> <span class="o">=</span> <span class="p">{</span><span class="n">seqs</span><span class="o">.</span><span class="n">id</span><span class="p">:</span> <span class="n">seqs</span><span class="p">}</span>
+    <span class="n">filename</span> <span class="o">=</span> <span class="n">uuid</span><span class="o">.</span><span class="n">uuid4</span><span class="p">()</span><span class="o">.</span><span class="n">hex</span>
+    <span class="n">fnm</span> <span class="o">=</span> <span class="s1">&#39;.&#39;</span> <span class="o">+</span> <span class="n">filename</span> <span class="o">+</span> <span class="s1">&#39;.fasta&#39;</span>
+    <span class="n">fnm_out</span> <span class="o">=</span> <span class="s1">&#39;.&#39;</span> <span class="o">+</span> <span class="n">filename</span> <span class="o">+</span> <span class="s1">&#39;.hmmscan&#39;</span>
+    <span class="n">_</span> <span class="o">=</span> <span class="n">SeqIO</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">seqs</span><span class="o">.</span><span class="n">values</span><span class="p">(),</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">path_to_msa</span><span class="p">,</span> <span class="n">fnm</span><span class="p">),</span> <span class="s1">&#39;fasta&#39;</span><span class="p">)</span>
+    <span class="n">cmd</span> <span class="o">=</span> <span class="s1">&#39;hmmscan --domtblout </span><span class="si">{}</span><span class="s1"> --cut_ga --cpu </span><span class="si">{}</span><span class="s1"> --noali </span><span class="si">{}</span><span class="s1"> </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+    <span class="c1">#cmd = &#39;hmmscan --domtblout {} --domE 0.01 --cpu {} --noali {} {}&#39;.format(</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">path_to_msa</span><span class="p">,</span> <span class="n">fnm_out</span><span class="p">),</span>
+        <span class="n">n_thread</span><span class="p">,</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">path_to_msa</span><span class="p">,</span> <span class="s1">&#39;data/Pfam_scan_db/Pfam-A.hmm&#39;</span><span class="p">),</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">path_to_msa</span><span class="p">,</span> <span class="n">fnm</span><span class="p">))</span>
+
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Running hmmscan...&#39;</span><span class="p">)</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">_</span> <span class="o">=</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">cmd</span><span class="p">,</span> <span class="n">shell</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">stdout</span><span class="o">=</span><span class="n">subprocess</span><span class="o">.</span><span class="n">PIPE</span><span class="p">)</span>
+    <span class="k">finally</span><span class="p">:</span>
+        <span class="n">_</span> <span class="o">=</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="s1">&#39;rm &#39;</span> <span class="o">+</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">path_to_msa</span><span class="p">,</span> <span class="n">fnm</span><span class="p">),</span> <span class="n">shell</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">tb</span> <span class="o">=</span> <span class="n">read_hmm_scan</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">path_to_msa</span><span class="p">,</span> <span class="n">fnm_out</span><span class="p">))</span>
+    <span class="k">finally</span><span class="p">:</span>
+        <span class="n">_</span> <span class="o">=</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="s1">&#39;rm &#39;</span> <span class="o">+</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">path_to_msa</span><span class="p">,</span> <span class="n">fnm_out</span><span class="p">),</span> <span class="n">shell</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">tb</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;No domain annotation from hmmscan!&#39;</span><span class="p">)</span>
+
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Annotating domain...&#39;</span><span class="p">)</span>
+    <span class="c1"># Refine hmmscan output (annotate clan, collapse same clan)</span>
+    <span class="n">tb</span> <span class="o">=</span> <span class="n">ann_clan</span><span class="p">(</span><span class="n">tb</span><span class="p">,</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">path_to_msa</span><span class="p">,</span> <span class="s1">&#39;data/Pfam_scan_db/Pfam-A.hmm.dat&#39;</span><span class="p">))</span>
+    <span class="n">tb</span> <span class="o">=</span> <span class="n">collapse_clan</span><span class="p">(</span><span class="n">tb</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">tb</span></div>
+
+
+<div class="viewcode-block" id="read_hmm_scan"><a class="viewcode-back" href="../API/contents.html#domain.read_hmm_scan">[docs]</a><span class="k">def</span> <span class="nf">read_hmm_scan</span><span class="p">(</span><span class="n">fp_hmm_scan</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Read :command:`hmmscan` output file in :option:`domtbout` format.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        fp_hmm_scan (str): filepath to the :command:`hmmscan` output.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        Domain annotation table.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># tb = pd.read_table(fp_hmm_scan, sep=&#39;\s+&#39;, comment=&#39;#&#39;, header=None)</span>
+    <span class="n">tb</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_table</span><span class="p">(</span><span class="n">fp_hmm_scan</span><span class="p">,</span> <span class="n">comment</span><span class="o">=</span><span class="s1">&#39;#&#39;</span><span class="p">,</span> <span class="n">header</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+    <span class="n">tb_ls</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">tb</span><span class="o">.</span><span class="n">index</span><span class="p">:</span>
+        <span class="n">tb_ls</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">re</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;\s+&#39;</span><span class="p">,</span> <span class="n">tb</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="mi">0</span><span class="p">])[:</span><span class="mi">22</span><span class="p">])</span>
+    <span class="n">tb</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">tb_ls</span><span class="p">)</span>
+    <span class="n">thead</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;target name&#39;</span><span class="p">,</span> <span class="s1">&#39;accession&#39;</span><span class="p">,</span> <span class="s1">&#39;tlen&#39;</span><span class="p">,</span> <span class="s1">&#39;query name&#39;</span><span class="p">,</span> <span class="s1">&#39;accession2&#39;</span><span class="p">,</span> <span class="s1">&#39;qlen&#39;</span><span class="p">,</span>
+             <span class="s1">&#39;E-value_full&#39;</span><span class="p">,</span> <span class="s1">&#39;score_full&#39;</span><span class="p">,</span> <span class="s1">&#39;bias_full&#39;</span><span class="p">,</span> <span class="s1">&#39;#&#39;</span><span class="p">,</span> <span class="s1">&#39;of&#39;</span><span class="p">,</span> <span class="s1">&#39;c-Evalue&#39;</span><span class="p">,</span> <span class="s1">&#39;i-Evalue&#39;</span><span class="p">,</span> <span class="s1">&#39;score_dom&#39;</span><span class="p">,</span> <span class="s1">&#39;bias_dom&#39;</span><span class="p">,</span>
+             <span class="s1">&#39;from_hmm&#39;</span><span class="p">,</span> <span class="s1">&#39;to_hmm&#39;</span><span class="p">,</span> <span class="s1">&#39;from_ali&#39;</span><span class="p">,</span> <span class="s1">&#39;to_ali&#39;</span><span class="p">,</span> <span class="s1">&#39;from_env&#39;</span><span class="p">,</span> <span class="s1">&#39;to_env&#39;</span><span class="p">,</span> <span class="s1">&#39;acc&#39;</span><span class="p">,</span> <span class="s1">&#39;description of target&#39;</span><span class="p">]</span>
+    <span class="n">thead</span> <span class="o">=</span> <span class="n">thead</span><span class="p">[:</span><span class="mi">22</span><span class="p">]</span>
+    <span class="c1"># tb = tb.iloc[:,:22]</span>
+    <span class="n">tb</span><span class="o">.</span><span class="n">columns</span> <span class="o">=</span> <span class="n">thead</span>
+    <span class="k">return</span> <span class="n">tb</span></div>
+
+
+<div class="viewcode-block" id="ann_clan"><a class="viewcode-back" href="../API/contents.html#domain.ann_clan">[docs]</a><span class="k">def</span> <span class="nf">ann_clan</span><span class="p">(</span><span class="n">hmm_scan_tb</span><span class="p">,</span> <span class="n">fp_pfam_dat</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Annotate pfam domain to the Clan information</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        hmm_scan_tb (pandas.DataFrame): hmmscan output table, returned from :code:`read_hmm_scan`.</span>
+<span class="sd">        fp_pfam_dat (str): file path to the :file:`Pfam-A.hmm.dat`.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        Domain table annotated with Clan information.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">all_record</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">fp_pfam_dat</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s1">&#39;utf-8&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+        <span class="n">dom</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
+            <span class="n">line</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">readline</span><span class="p">()</span>
+            <span class="k">if</span> <span class="n">line</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">line</span> <span class="o">==</span> <span class="s1">&#39;//</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="s1">&#39;CL&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">dom</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+                        <span class="n">dom</span><span class="p">[</span><span class="s1">&#39;CL&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+                    <span class="n">all_record</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">dom</span><span class="p">)</span>
+                    <span class="n">dom</span> <span class="o">=</span> <span class="p">{}</span>
+                <span class="k">elif</span> <span class="n">re</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="s1">&#39;=&#39;</span><span class="p">,</span> <span class="n">line</span><span class="p">):</span>
+                    <span class="n">info</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;\s\s+&#39;</span><span class="p">,</span> <span class="n">line</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;=&#39;</span><span class="p">)[</span><span class="mi">1</span><span class="p">])</span>
+                    <span class="n">dom</span><span class="p">[</span><span class="n">info</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39; &#39;</span><span class="p">)[</span><span class="mi">1</span><span class="p">]]</span> <span class="o">=</span> <span class="n">info</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">break</span>
+    <span class="n">all_record</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">all_record</span><span class="p">)</span>
+    <span class="n">merged</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">merge</span><span class="p">(</span><span class="n">left</span><span class="o">=</span><span class="n">hmm_scan_tb</span><span class="p">,</span> <span class="n">right</span><span class="o">=</span><span class="n">all_record</span><span class="p">[[</span><span class="s1">&#39;AC&#39;</span><span class="p">,</span> <span class="s1">&#39;DE&#39;</span><span class="p">,</span> <span class="s1">&#39;CL&#39;</span><span class="p">]],</span> <span class="n">how</span><span class="o">=</span><span class="s1">&#39;left&#39;</span><span class="p">,</span> <span class="n">left_on</span><span class="o">=</span><span class="s1">&#39;accession&#39;</span><span class="p">,</span>
+                      <span class="n">right_on</span><span class="o">=</span><span class="s1">&#39;AC&#39;</span><span class="p">)</span>
+
+    <span class="c1"># for those without clan info, use PF domain ID directly</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">merged</span><span class="o">.</span><span class="n">index</span><span class="p">:</span>
+        <span class="n">cl</span> <span class="o">=</span> <span class="n">merged</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">CL</span>
+        <span class="k">if</span> <span class="n">cl</span> <span class="o">!=</span> <span class="n">cl</span> <span class="ow">or</span> <span class="n">cl</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">merged</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">CL</span> <span class="o">=</span> <span class="n">merged</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">accession</span>
+
+    <span class="k">return</span> <span class="n">merged</span></div>
+
+
+<div class="viewcode-block" id="collapse_clan"><a class="viewcode-back" href="../API/contents.html#domain.collapse_clan">[docs]</a><span class="k">def</span> <span class="nf">collapse_clan</span><span class="p">(</span><span class="n">hmm_scan_tb_clan</span><span class="p">,</span> <span class="n">rm_within</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Collapse domains that belong to the same Clan family.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        hmm_scan_tb_clan (pandas.DataFrame): :command:`hmmscan` output table annotated with clan info.</span>
+<span class="sd">        rm_within (bool): whether remove regions within other regions, like sub-domain.</span>
+<span class="sd">    Returns:</span>
+<span class="sd">        Domain table with domains grouped by Clan.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">out</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">seq</span> <span class="ow">in</span> <span class="n">np</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span><span class="n">hmm_scan_tb_clan</span><span class="p">[</span><span class="s1">&#39;query name&#39;</span><span class="p">]):</span>
+        <span class="n">sub</span> <span class="o">=</span> <span class="n">hmm_scan_tb_clan</span><span class="p">[</span><span class="n">hmm_scan_tb_clan</span><span class="p">[</span><span class="s1">&#39;query name&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="n">seq</span><span class="p">]</span>
+        <span class="n">clan_count</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span><span class="n">sub</span><span class="o">.</span><span class="n">CL</span><span class="p">,</span> <span class="n">return_counts</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">dup_clan</span> <span class="o">=</span> <span class="n">clan_count</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="n">clan_count</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">!=</span> <span class="mi">1</span><span class="p">]</span>
+        <span class="n">uni_clan</span> <span class="o">=</span> <span class="n">clan_count</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="n">clan_count</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="mi">1</span><span class="p">]</span>
+        <span class="n">uni_clan</span> <span class="o">=</span> <span class="n">sub</span><span class="p">[</span><span class="n">sub</span><span class="p">[</span><span class="s1">&#39;CL&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">isin</span><span class="p">(</span><span class="n">uni_clan</span><span class="p">)]</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">uni_clan</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]):</span>
+            <span class="n">out</span><span class="o">.</span><span class="n">append</span><span class="p">({</span><span class="s1">&#39;seq_id&#39;</span><span class="p">:</span> <span class="n">seq</span><span class="p">,</span>
+                        <span class="s1">&#39;clan&#39;</span><span class="p">:</span> <span class="n">uni_clan</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">CL</span><span class="p">,</span>
+                        <span class="c1"># Use `env` range (.from_env) - envelope or the full alignment</span>
+                        <span class="c1"># Use `aln` range (.from_ali) - high confidence alignment</span>
+                        <span class="s1">&#39;env_start&#39;</span><span class="p">:</span> <span class="n">uni_clan</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">from_env</span><span class="p">,</span>
+                        <span class="s1">&#39;env_end&#39;</span><span class="p">:</span> <span class="n">uni_clan</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">to_env</span><span class="p">,</span>
+                        <span class="s1">&#39;PF&#39;</span><span class="p">:</span> <span class="n">uni_clan</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">accession</span><span class="p">})</span>
+        <span class="k">for</span> <span class="n">dc</span> <span class="ow">in</span> <span class="n">dup_clan</span><span class="p">:</span>
+            <span class="n">dc_sub</span> <span class="o">=</span> <span class="n">sub</span><span class="p">[</span><span class="n">sub</span><span class="o">.</span><span class="n">CL</span> <span class="o">==</span> <span class="n">dc</span><span class="p">][[</span><span class="s1">&#39;from_env&#39;</span><span class="p">,</span> <span class="s1">&#39;to_env&#39;</span><span class="p">,</span> <span class="s1">&#39;accession&#39;</span><span class="p">]]</span>
+            <span class="n">new_from</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">dc_sub</span><span class="p">[</span><span class="s1">&#39;from_env&#39;</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">int</span><span class="p">))</span>
+            <span class="n">new_end</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">dc_sub</span><span class="p">[</span><span class="s1">&#39;to_env&#39;</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">int</span><span class="p">))</span>
+            <span class="n">out</span><span class="o">.</span><span class="n">append</span><span class="p">({</span><span class="s1">&#39;seq_id&#39;</span><span class="p">:</span> <span class="n">seq</span><span class="p">,</span> <span class="s1">&#39;clan&#39;</span><span class="p">:</span> <span class="n">dc</span><span class="p">,</span>
+                        <span class="s1">&#39;env_start&#39;</span><span class="p">:</span> <span class="n">new_from</span><span class="p">,</span> <span class="s1">&#39;env_end&#39;</span><span class="p">:</span> <span class="n">new_end</span><span class="p">,</span>
+                        <span class="s1">&#39;PF&#39;</span><span class="p">:</span> <span class="s1">&#39;_&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">dc_sub</span><span class="o">.</span><span class="n">accession</span><span class="p">)})</span>
+    <span class="n">out</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">out</span><span class="p">)</span>
+    <span class="n">out</span><span class="p">[</span><span class="s1">&#39;env_start&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">out</span><span class="p">[</span><span class="s1">&#39;env_start&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="s1">&#39;int&#39;</span><span class="p">)</span>
+    <span class="n">out</span><span class="p">[</span><span class="s1">&#39;env_end&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">out</span><span class="p">[</span><span class="s1">&#39;env_end&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="s1">&#39;int&#39;</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">rm_within</span><span class="p">:</span>
+        <span class="n">to_rm</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">np</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span><span class="n">out</span><span class="p">[</span><span class="s1">&#39;seq_id&#39;</span><span class="p">]):</span>
+            <span class="n">ssub</span> <span class="o">=</span> <span class="n">out</span><span class="p">[</span><span class="n">out</span><span class="p">[</span><span class="s1">&#39;seq_id&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="n">i</span><span class="p">][[</span><span class="s1">&#39;env_start&#39;</span><span class="p">,</span> <span class="s1">&#39;env_end&#39;</span><span class="p">]]</span>
+            <span class="n">ssub</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">transpose</span><span class="p">(</span><span class="n">ssub</span><span class="p">)</span><span class="o">.</span><span class="n">to_dict</span><span class="p">()</span>
+            <span class="n">check</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">ssub</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+                <span class="n">check</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">tuple</span><span class="p">(</span><span class="n">ssub</span><span class="p">[</span><span class="n">s</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">()))</span>
+            <span class="n">wp</span> <span class="o">=</span> <span class="n">get_within_pair</span><span class="p">(</span><span class="n">check</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">w</span> <span class="ow">in</span> <span class="n">wp</span><span class="p">:</span>
+                <span class="n">to_rm</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">ssub</span><span class="o">.</span><span class="n">keys</span><span class="p">())[</span><span class="n">check</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">w</span><span class="p">)])</span>
+        <span class="n">out</span> <span class="o">=</span> <span class="n">out</span><span class="o">.</span><span class="n">drop</span><span class="p">(</span><span class="n">labels</span><span class="o">=</span><span class="n">to_rm</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">out</span></div>
+
+
+<div class="viewcode-block" id="get_pfam_from_Uniprot"><a class="viewcode-back" href="../API/contents.html#domain.get_pfam_from_Uniprot">[docs]</a><span class="k">def</span> <span class="nf">get_pfam_from_Uniprot</span><span class="p">(</span><span class="n">uniprot_entry</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;(deprecated) Get Pfam information from UniProt database (cross-reference).</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        uniprot_entry (str): UniProt Entry (ID) of the protein.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        A list of Pfam domain IDs.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">payload</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;query&#39;</span><span class="p">:</span> <span class="s1">&#39;id:&#39;</span><span class="o">+</span><span class="n">uniprot_entry</span><span class="p">,</span> <span class="s1">&#39;columns&#39;</span><span class="p">:</span> <span class="s1">&#39;database(Pfam)&#39;</span><span class="p">,</span> <span class="s1">&#39;format&#39;</span><span class="p">:</span><span class="s1">&#39;tab&#39;</span><span class="p">}</span>
+    <span class="n">response</span> <span class="o">=</span> <span class="n">requests</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;https://www.uniprot.org/uniprot&#39;</span><span class="p">,</span> <span class="n">params</span><span class="o">=</span><span class="n">payload</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">response</span><span class="o">.</span><span class="n">status_code</span> <span class="o">==</span> <span class="mi">200</span><span class="p">:</span>
+        <span class="n">pfams</span> <span class="o">=</span> <span class="n">response</span><span class="o">.</span><span class="n">text</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;;&#39;</span><span class="p">)</span>
+        <span class="n">pfams</span> <span class="o">=</span> <span class="n">pfams</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+        <span class="k">return</span> <span class="n">pfams</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ConnectionError</span><span class="p">(</span><span class="s1">&#39;Failed to connect to UniProt or invalid UniProt entry!&#39;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="read_pfam_scan"><a class="viewcode-back" href="../API/contents.html#domain.read_pfam_scan">[docs]</a><span class="k">def</span> <span class="nf">read_pfam_scan</span><span class="p">(</span><span class="n">fp_pfam_scan</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;(deprecated) Read pfamscan.pl output.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_table</span><span class="p">(</span><span class="n">fp_pfam_scan</span><span class="p">,</span> <span class="n">comment</span><span class="o">=</span><span class="s1">&#39;@&#39;</span><span class="p">,</span> <span class="n">skiprows</span><span class="o">=</span><span class="mi">27</span><span class="p">,</span> <span class="n">header</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">sep</span><span class="o">=</span><span class="s1">&#39;\s+&#39;</span><span class="p">)</span>
+    <span class="n">df</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">iloc</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">:</span><span class="mi">15</span><span class="p">]</span>
+    <span class="n">df</span><span class="o">.</span><span class="n">columns</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;seq_id&#39;</span><span class="p">,</span> <span class="s1">&#39;aln_start&#39;</span><span class="p">,</span> <span class="s1">&#39;aln_end&#39;</span><span class="p">,</span> <span class="s1">&#39;env_start&#39;</span><span class="p">,</span> <span class="s1">&#39;env_end&#39;</span><span class="p">,</span> <span class="s1">&#39;hmm_acc&#39;</span><span class="p">,</span> <span class="s1">&#39;hmm_name&#39;</span><span class="p">,</span> <span class="s1">&#39;type&#39;</span><span class="p">,</span> <span class="s1">&#39;hmm_start&#39;</span><span class="p">,</span>\
+                  <span class="s1">&#39;hmm_end&#39;</span><span class="p">,</span> <span class="s1">&#39;hmm_length&#39;</span><span class="p">,</span> <span class="s1">&#39;bit_score&#39;</span><span class="p">,</span>
+                  <span class="s1">&#39;E_value&#39;</span><span class="p">,</span> <span class="s1">&#39;significance&#39;</span><span class="p">,</span> <span class="s1">&#39;clan&#39;</span><span class="p">]</span>
+    <span class="n">df</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="n">df</span><span class="p">[</span><span class="s1">&#39;type&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;Domain&#39;</span><span class="p">]</span>
+    <span class="n">df</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">astype</span><span class="p">({</span><span class="s1">&#39;seq_id&#39;</span><span class="p">:</span> <span class="nb">str</span><span class="p">})</span>
+    <span class="k">return</span> <span class="n">df</span></div>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Yifan Gui.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

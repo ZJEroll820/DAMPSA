@@ -1,0 +1,22 @@
+analysis/output/**
+data/**
+!data/readme.txt
+
+# external
+
+
+__pycache__
+.DS_Store
+.ipynb_checkpoints
+.Rhistory
+
+# sphinx
+# build
+
+# idea
+.idea
+
+# pypi
+# build
+*.egg-info
+dist

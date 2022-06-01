@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>API reference &mdash; DAMPSA 1.0 documentation</title>
+      <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+        <script src="../_static/jquery.js"></script>
+        <script src="../_static/underscore.js"></script>
+        <script src="../_static/doctools.js"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="prev" title="Welcome to DAMPSA’s documentation!" href="../index.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="../index.html" class="icon icon-home"> DAMPSA
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">API reference</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#module-domain">domain</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#module-chain">chain</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#module-align">align</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#module-evaluate">evaluate</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#module-utils">utils</a></li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">DAMPSA</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home"></a> &raquo;</li>
+      <li>API reference</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/API/contents.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="api-reference">
+<h1>API reference<a class="headerlink" href="#api-reference" title="Permalink to this headline"></a></h1>
+<section id="module-domain">
+<span id="domain"></span><h2>domain<a class="headerlink" href="#module-domain" title="Permalink to this headline"></a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="domain.run_hmmscan">
+<span class="sig-prename descclassname"><span class="pre">domain.</span></span><span class="sig-name descname"><span class="pre">run_hmmscan</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">seqs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_thread</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">4</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/domain.html#run_hmmscan"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#domain.run_hmmscan" title="Permalink to this definition"></a></dt>
+<dd><p>Run Hmmscan for input sequences.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>seqs</strong> (<a class="reference external" href="https://docs.python.org/3.6/library/stdtypes.html#dict" title="(in Python v3.6)"><em>dict</em></a>) – dictionary of <code class="xref py py-class docutils literal notranslate"><span class="pre">Bio.SeqRecord</span></code> protein sequences.</p></li>
+<li><p><strong>n_thread</strong> (<a class="reference external" href="https://docs.python.org/3.6/library/functions.html#int" title="(in Python v3.6)"><em>int</em></a>) – number of thread for running <strong class="command">hmmscan</strong>.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="domain.read_hmm_scan">
+<span class="sig-prename descclassname"><span class="pre">domain.</span></span><span class="sig-name descname"><span class="pre">read_hmm_scan</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fp_hmm_scan</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/domain.html#read_hmm_scan"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#domain.read_hmm_scan" title="Permalink to this definition"></a></dt>
+<dd><p>Read <strong class="command">hmmscan</strong> output file in <code class="xref std std-option docutils literal notranslate"><span class="pre">domtbout</span></code> format.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>fp_hmm_scan</strong> (<a class="reference external" href="https://docs.python.org/3.6/library/stdtypes.html#str" title="(in Python v3.6)"><em>str</em></a>) – filepath to the <strong class="command">hmmscan</strong> output.</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>Domain annotation table.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="domain.ann_clan">
+<span class="sig-prename descclassname"><span class="pre">domain.</span></span><span class="sig-name descname"><span class="pre">ann_clan</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">hmm_scan_tb</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fp_pfam_dat</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/domain.html#ann_clan"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#domain.ann_clan" title="Permalink to this definition"></a></dt>
+<dd><p>Annotate pfam domain to the Clan information</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>hmm_scan_tb</strong> (<a class="reference external" href="https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v1.4.2)"><em>pandas.DataFrame</em></a>) – hmmscan output table, returned from <code class="code docutils literal notranslate"><span class="pre">read_hmm_scan</span></code>.</p></li>
+<li><p><strong>fp_pfam_dat</strong> (<a class="reference external" href="https://docs.python.org/3.6/library/stdtypes.html#str" title="(in Python v3.6)"><em>str</em></a>) – file path to the <code class="file docutils literal notranslate"><span class="pre">Pfam-A.hmm.dat</span></code>.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>Domain table annotated with Clan information.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="domain.collapse_clan">
+<span class="sig-prename descclassname"><span class="pre">domain.</span></span><span class="sig-name descname"><span class="pre">collapse_clan</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">hmm_scan_tb_clan</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rm_within</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/domain.html#collapse_clan"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#domain.collapse_clan" title="Permalink to this definition"></a></dt>
+<dd><p>Collapse domains that belong to the same Clan family.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>hmm_scan_tb_clan</strong> (<a class="reference external" href="https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v1.4.2)"><em>pandas.DataFrame</em></a>) – <strong class="command">hmmscan</strong> output table annotated with clan info.</p></li>
+<li><p><strong>rm_within</strong> (<a class="reference external" href="https://docs.python.org/3.6/library/functions.html#bool" title="(in Python v3.6)"><em>bool</em></a>) – whether remove regions within other regions, like sub-domain.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>Domain table with domains grouped by Clan.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="domain.get_pfam_from_Uniprot">
+<span class="sig-prename descclassname"><span class="pre">domain.</span></span><span class="sig-name descname"><span class="pre">get_pfam_from_Uniprot</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">uniprot_entry</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/domain.html#get_pfam_from_Uniprot"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#domain.get_pfam_from_Uniprot" title="Permalink to this definition"></a></dt>
+<dd><p>(deprecated) Get Pfam information from UniProt database (cross-reference).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>uniprot_entry</strong> (<a class="reference external" href="https://docs.python.org/3.6/library/stdtypes.html#str" title="(in Python v3.6)"><em>str</em></a>) – UniProt Entry (ID) of the protein.</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>A list of Pfam domain IDs.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="domain.read_pfam_scan">
+<span class="sig-prename descclassname"><span class="pre">domain.</span></span><span class="sig-name descname"><span class="pre">read_pfam_scan</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fp_pfam_scan</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/domain.html#read_pfam_scan"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#domain.read_pfam_scan" title="Permalink to this definition"></a></dt>
+<dd><p>(deprecated) Read pfamscan.pl output.</p>
+</dd></dl>
+
+</section>
+<section id="module-chain">
+<span id="chain"></span><h2>chain<a class="headerlink" href="#module-chain" title="Permalink to this headline"></a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="chain.get_block_seq">
+<span class="sig-prename descclassname"><span class="pre">chain.</span></span><span class="sig-name descname"><span class="pre">get_block_seq</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">seqs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">domain_table</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dcol</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'clan'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">start_nm</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'env_start'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">end_nm</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'env_end'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">get_mask</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">check_linker_len</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/chain.html#get_block_seq"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#chain.get_block_seq" title="Permalink to this definition"></a></dt>
+<dd><p>Get sequence for specific domain.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>seqs</strong> (<a class="reference external" href="https://docs.python.org/3.6/library/stdtypes.html#dict" title="(in Python v3.6)"><em>dict</em></a>) – dictionary of <code class="xref py py-class docutils literal notranslate"><span class="pre">Bio.SeqRecord</span></code>.</p></li>
+<li><p><strong>domain_table</strong> (<a class="reference external" href="https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v1.4.2)"><em>pandas.DataFrame</em></a>) – must have the following columns:
+<code class="code docutils literal notranslate"><span class="pre">seq_id</span></code>: sequence ID;
+<code class="code docutils literal notranslate"><span class="pre">start_nm</span></code>: start of domain;
+<code class="code docutils literal notranslate"><span class="pre">end_nm</span></code>: end of domain;
+<code class="code docutils literal notranslate"><span class="pre">dcol</span></code>: column refer to the domain.</p></li>
+<li><p><strong>dcol</strong> (<a class="reference external" href="https://docs.python.org/3.6/library/stdtypes.html#str" title="(in Python v3.6)"><em>str</em></a>) – config the name of the column referring to the domain ID.</p></li>
+<li><p><strong>start_nm</strong> (<a class="reference external" href="https://docs.python.org/3.6/library/stdtypes.html#str" title="(in Python v3.6)"><em>str</em></a>) – config the name of the column referring to the domain start.</p></li>
+<li><p><strong>end_nm</strong> (<a class="reference external" href="https://docs.python.org/3.6/library/stdtypes.html#str" title="(in Python v3.6)"><em>str</em></a>) – config the name of the column referring to the domain end.</p></li>
+<li><p><strong>get_mask</strong> (<a class="reference external" href="https://docs.python.org/3.6/library/functions.html#bool" title="(in Python v3.6)"><em>bool</em></a>) – whether mask domain with * and output sequences.</p></li>
+<li><p><strong>check_linker_len</strong> (<a class="reference external" href="https://docs.python.org/3.6/library/functions.html#bool" title="(in Python v3.6)"><em>bool</em></a>) – whether to check overlong linker.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>Sequences corresponding to each domain block (dict).</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="chain.add_linker_to_chain">
+<span class="sig-prename descclassname"><span class="pre">chain.</span></span><span class="sig-name descname"><span class="pre">add_linker_to_chain</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">chain</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/chain.html#add_linker_to_chain"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#chain.add_linker_to_chain" title="Permalink to this definition"></a></dt>
+<dd><p>Add linker annotation like <code class="code docutils literal notranslate"><span class="pre">_link_1</span></code> (in order from one) to the domain chain.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="chain.get_chain_by_align">
+<span class="sig-prename descclassname"><span class="pre">chain.</span></span><span class="sig-name descname"><span class="pre">get_chain_by_align</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">domain_table</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dcol</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'clan'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">start_nm</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'env_start'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gap_penalty_init</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.4</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/chain.html#get_chain_by_align"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#chain.get_chain_by_align" title="Permalink to this definition"></a></dt>
+<dd><p>Get Clan chain from domain annotation using progressive alignment.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>gap_penalty_init</strong> (<a class="reference external" href="https://docs.python.org/3.6/library/functions.html#float" title="(in Python v3.6)"><em>float</em></a>) – Initial gap penalty (0 to 1) to try progressive alignment on the chain.
+If the alignment cannot separate each domain or linker in a unique column, will reduce gap penalty by half.
+If failed for five rounds, will raise an error.</p>
+</dd>
+</dl>
+<p>See <code class="code docutils literal notranslate"><span class="pre">get_block_seq</span></code> for other parameters.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="chain.get_chain">
+<span class="sig-prename descclassname"><span class="pre">chain.</span></span><span class="sig-name descname"><span class="pre">get_chain</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">domain_table</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dcol</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'clan'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">start_nm</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'env_start'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">end_nm</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'env_end'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/chain.html#get_chain"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#chain.get_chain" title="Permalink to this definition"></a></dt>
+<dd><p>(deprecated) Get Clan chain from domain annotation.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Domain sorted according to mean center across all sequences.
+Use IQR to filter outlier (if sequences containing domain &lt;=3, don’t do).</p>
+</div>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="chain.check_linker_in_domain">
+<span class="sig-prename descclassname"><span class="pre">chain.</span></span><span class="sig-name descname"><span class="pre">check_linker_in_domain</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dom</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">test_seqs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">direction</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'start'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/chain.html#check_linker_in_domain"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#chain.check_linker_in_domain" title="Permalink to this definition"></a></dt>
+<dd><p>Check if the linker has potential sequence in the domain.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>dom</strong> (<a class="reference external" href="https://docs.python.org/3.6/library/stdtypes.html#list" title="(in Python v3.6)"><em>list</em></a>) – domain set(s) to test.</p></li>
+<li><p><strong>seqs</strong> (<a class="reference external" href="https://docs.python.org/3.6/library/stdtypes.html#dict" title="(in Python v3.6)"><em>dict</em></a>) – set of linker segment sequences to test.</p></li>
+<li><p><strong>direction</strong> (<a class="reference external" href="https://docs.python.org/3.6/library/stdtypes.html#str" title="(in Python v3.6)"><em>str</em></a>) – either start or end of the test sequence may overlap
+with the domain sequences.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="chain.refine_linker">
+<span class="sig-prename descclassname"><span class="pre">chain.</span></span><span class="sig-name descname"><span class="pre">refine_linker</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">domain_set</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">linker_set</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">chain</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">domain_table</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/chain.html#refine_linker"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#chain.refine_linker" title="Permalink to this definition"></a></dt>
+<dd><p>Check if the linker is reasonable. Identify undetected domains.
+Then re-partition the domain and linker relationship.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>domain_set</strong> (<a class="reference external" href="https://docs.python.org/3.6/library/stdtypes.html#dict" title="(in Python v3.6)"><em>dict</em></a>) – set of domain segment sequences.</p></li>
+<li><p><strong>linker_set</strong> (<a class="reference external" href="https://docs.python.org/3.6/library/stdtypes.html#dict" title="(in Python v3.6)"><em>dict</em></a>) – set of linker segment sequences.</p></li>
+<li><p><strong>chain</strong> (<a class="reference external" href="https://docs.python.org/3.6/library/stdtypes.html#list" title="(in Python v3.6)"><em>list</em></a>) – domain chain.</p></li>
+<li><p><strong>domain_table</strong> (<a class="reference external" href="https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v1.4.2)"><em>pandas.DataFrame</em></a>) – domain annotation table.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+<section id="module-align">
+<span id="align"></span><h2>align<a class="headerlink" href="#module-align" title="Permalink to this headline"></a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="align.align_block">
+<span class="sig-prename descclassname"><span class="pre">align.</span></span><span class="sig-name descname"><span class="pre">align_block</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">seqs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">profile</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mode</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'single'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">app</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'clustalo'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/align.html#align_block"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#align.align_block" title="Permalink to this definition"></a></dt>
+<dd><p>Align a block of sequences with selected aligner.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>seqs</strong> (<a class="reference external" href="https://docs.python.org/3.6/library/stdtypes.html#dict" title="(in Python v3.6)"><em>dict</em></a><em> or </em><a class="reference external" href="https://docs.python.org/3.6/library/stdtypes.html#list" title="(in Python v3.6)"><em>list</em></a>) – dictionary or list of <code class="xref py py-class docutils literal notranslate"><span class="pre">Bio.SeqRecord</span></code>.</p></li>
+<li><p><strong>profile</strong> (<a class="reference external" href="https://docs.python.org/3.6/library/stdtypes.html#dict" title="(in Python v3.6)"><em>dict</em></a>) – <code class="xref py py-class docutils literal notranslate"><span class="pre">Bio.SegRecord</span></code> used to generate a profile, use in <code class="docutils literal notranslate"><span class="pre">profile</span></code> mode.</p></li>
+<li><p><strong>mode</strong> (<a class="reference external" href="https://docs.python.org/3.6/library/stdtypes.html#str" title="(in Python v3.6)"><em>str</em></a>) – either <code class="docutils literal notranslate"><span class="pre">single</span></code> or <code class="docutils literal notranslate"><span class="pre">profile</span></code>.</p></li>
+<li><p><strong>app</strong> (<a class="reference external" href="https://docs.python.org/3.6/library/stdtypes.html#str" title="(in Python v3.6)"><em>str</em></a>) – either <code class="docutils literal notranslate"><span class="pre">clustalo</span></code> or <code class="docutils literal notranslate"><span class="pre">mafft</span></code>. Only applied to <code class="docutils literal notranslate"><span class="pre">single</span></code> mode.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>Aligned sequence block.</p>
+</dd>
+</dl>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<ul class="simple">
+<li><p>In the <code class="docutils literal notranslate"><span class="pre">profile</span></code> mode, you can only use <cite>clustalo</cite>.</p></li>
+<li><p>In the <code class="docutils literal notranslate"><span class="pre">single</span></code> mode, you can choose to use <cite>clustalo</cite> or <cite>mafft l-ens-i</cite>.</p></li>
+</ul>
+</div>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="align.concatenate_align_block">
+<span class="sig-prename descclassname"><span class="pre">align.</span></span><span class="sig-name descname"><span class="pre">concatenate_align_block</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">chain</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">domain_align</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">linker_align</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">all_id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">escape</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'null'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/align.html#concatenate_align_block"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#align.concatenate_align_block" title="Permalink to this definition"></a></dt>
+<dd><p>Connect alignment blocks</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>chain</strong> (<a class="reference external" href="https://docs.python.org/3.6/library/stdtypes.html#list" title="(in Python v3.6)"><em>list</em></a>) – order of alignment blocks.</p></li>
+<li><p><strong>domain_align</strong> (<a class="reference external" href="https://docs.python.org/3.6/library/stdtypes.html#dict" title="(in Python v3.6)"><em>dict</em></a>) – alignment of each domain block.</p></li>
+<li><p><strong>linker_align</strong> (<a class="reference external" href="https://docs.python.org/3.6/library/stdtypes.html#dict" title="(in Python v3.6)"><em>dict</em></a>) – alignment of each linker (and N/C overhang) block.</p></li>
+<li><p><strong>all_id</strong> (<a class="reference external" href="https://docs.python.org/3.6/library/stdtypes.html#list" title="(in Python v3.6)"><em>list</em></a>) – list of all sequence ids.</p></li>
+<li><p><strong>escape</strong> (<a class="reference external" href="https://docs.python.org/3.6/library/stdtypes.html#str" title="(in Python v3.6)"><em>str</em></a>) – empty alignment block that cannot be chained, default :code:’null’.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>Concatenated alignment block.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="align.refine_align_edge">
+<span class="sig-prename descclassname"><span class="pre">align.</span></span><span class="sig-name descname"><span class="pre">refine_align_edge</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">alignment</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">domain_table</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">search_range</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">10</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/align.html#refine_align_edge"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#align.refine_align_edge" title="Permalink to this definition"></a></dt>
+<dd><p>Refine the edge between linker and domains</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>alignment</strong> (<a class="reference external" href="https://biopython.org/docs/latest/api/Bio.Align.html#Bio.Align.MultipleSeqAlignment" title="(in Biopython v1.79)"><em>Bio.Align.MultipleSeqAlignment</em></a>) – alignment matrix to refine.</p></li>
+<li><p><strong>domain_table</strong> (<a class="reference external" href="https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v1.4.2)"><em>pandas.DataFrame</em></a>) – table storing domain information.</p></li>
+<li><p><strong>search_range</strong> (<a class="reference external" href="https://docs.python.org/3.6/library/functions.html#int" title="(in Python v3.6)"><em>int</em></a>) – only backward search domain end for 10 residues</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>Edge-refined alignments.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+<section id="module-evaluate">
+<span id="evaluate"></span><h2>evaluate<a class="headerlink" href="#module-evaluate" title="Permalink to this headline"></a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="evaluate.fasta2msf">
+<span class="sig-prename descclassname"><span class="pre">evaluate.</span></span><span class="sig-name descname"><span class="pre">fasta2msf</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">in_file</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">out_file</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/evaluate.html#fasta2msf"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#evaluate.fasta2msf" title="Permalink to this definition"></a></dt>
+<dd><p>(deprecated) Convert MSA in fasta format to msf format, require EMBOSS <strong class="command">aligncopy</strong>.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="evaluate.msf2fasta">
+<span class="sig-prename descclassname"><span class="pre">evaluate.</span></span><span class="sig-name descname"><span class="pre">msf2fasta</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">in_file</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">out_file</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/evaluate.html#msf2fasta"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#evaluate.msf2fasta" title="Permalink to this definition"></a></dt>
+<dd><p>Convert MSA in msf format to fasta format.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>in_file</strong> (<a class="reference external" href="https://docs.python.org/3.6/library/stdtypes.html#str" title="(in Python v3.6)"><em>str</em></a>) – Input file path, must end with <code class="file docutils literal notranslate"><span class="pre">.msf</span></code>.</p></li>
+<li><p><strong>out_file</strong> (<a class="reference external" href="https://docs.python.org/3.6/library/stdtypes.html#str" title="(in Python v3.6)"><em>str</em></a>) – Output file path, must end with <code class="file docutils literal notranslate"><span class="pre">.fasta</span></code>.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="evaluate.run_fastSP">
+<span class="sig-prename descclassname"><span class="pre">evaluate.</span></span><span class="sig-name descname"><span class="pre">run_fastSP</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ref_file</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">test_files</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">test_file_dir</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fastSP_jar_path</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/evaluate.html#run_fastSP"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#evaluate.run_fastSP" title="Permalink to this definition"></a></dt>
+<dd><p>Run fastSP to evaluate MSA performance.
+:param ref_file: path to reference alignment file.</p>
+<blockquote>
+<div><p>If reference is .msf file, will convert to fasta temp file.</p>
+</div></blockquote>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>test_files</strong> (<a class="reference external" href="https://docs.python.org/3.6/library/stdtypes.html#list" title="(in Python v3.6)"><em>list</em></a>) – list of alignment fasta files to test on reference alignment.</p></li>
+<li><p><strong>test_file_dir</strong> (<a class="reference external" href="https://docs.python.org/3.6/library/stdtypes.html#str" title="(in Python v3.6)"><em>str</em></a>) – home directory of test files. If None, directly use <cite>test_files</cite>.</p></li>
+<li><p><strong>fastSP_jar_path</strong> (<a class="reference external" href="https://docs.python.org/3.6/library/stdtypes.html#str" title="(in Python v3.6)"><em>str</em></a>) – specify path to <code class="file docutils literal notranslate"><span class="pre">FastSP.jar</span></code>.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="evaluate.evaluate_Prefab">
+<span class="sig-prename descclassname"><span class="pre">evaluate.</span></span><span class="sig-name descname"><span class="pre">evaluate_Prefab</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ref_file</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">test_files</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">test_prefix</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/evaluate.html#evaluate_Prefab"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#evaluate.evaluate_Prefab" title="Permalink to this definition"></a></dt>
+<dd><p>Evaluate performance of Prefab.</p>
+<p>According to original publication (Edgar 2004, NAR), the accuracy is
+evaluated on the original pair, after align them together with blast hits.</p>
+</dd></dl>
+
+</section>
+<section id="module-utils">
+<span id="utils"></span><h2>utils<a class="headerlink" href="#module-utils" title="Permalink to this headline"></a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="utils.get_overlap_pair">
+<span class="sig-prename descclassname"><span class="pre">utils.</span></span><span class="sig-name descname"><span class="pre">get_overlap_pair</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">segms</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/utils.html#get_overlap_pair"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#utils.get_overlap_pair" title="Permalink to this definition"></a></dt>
+<dd><p>Get every pair of overlapping segment in a list.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>segms</strong> (<a class="reference external" href="https://docs.python.org/3.6/library/stdtypes.html#list" title="(in Python v3.6)"><em>list</em></a>) – a list of segments <code class="code docutils literal notranslate"><span class="pre">[start,</span> <span class="pre">end]</span></code>.</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>A list of paired segments that overlap.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="utils.get_within_pair">
+<span class="sig-prename descclassname"><span class="pre">utils.</span></span><span class="sig-name descname"><span class="pre">get_within_pair</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">segms</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/utils.html#get_within_pair"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#utils.get_within_pair" title="Permalink to this definition"></a></dt>
+<dd><p>Get every segment that is contained by another segment.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>segms</strong> (<a class="reference external" href="https://docs.python.org/3.6/library/stdtypes.html#list" title="(in Python v3.6)"><em>list</em></a>) – a list of segments <code class="code docutils literal notranslate"><span class="pre">[start,</span> <span class="pre">end]</span></code>.</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>A list of paired segments that have a “within” relationship.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="utils.load_seq">
+<span class="sig-prename descclassname"><span class="pre">utils.</span></span><span class="sig-name descname"><span class="pre">load_seq</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fp</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">allow_suffix</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/utils.html#load_seq"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#utils.load_seq" title="Permalink to this definition"></a></dt>
+<dd><p>Read all sequences together (may take much memory)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>fp</strong> (<a class="reference external" href="https://docs.python.org/3.6/library/stdtypes.html#str" title="(in Python v3.6)"><em>str</em></a>) – filepath to sequences or the folder containing them.</p></li>
+<li><p><strong>allow_suffix</strong> (<a class="reference external" href="https://docs.python.org/3.6/library/stdtypes.html#list" title="(in Python v3.6)"><em>list</em></a>) – allow other suffix than <code class="file docutils literal notranslate"><span class="pre">.fasta</span></code>.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><em>A dictionary with keys</em> – sequence ID and values: <code class="xref py py-class docutils literal notranslate"><span class="pre">Bio.SeqRecord</span></code> object.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="utils.load_Uniprot_series">
+<span class="sig-prename descclassname"><span class="pre">utils.</span></span><span class="sig-name descname"><span class="pre">load_Uniprot_series</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">series_fp</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tab_fp</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">collapse_org</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_PE</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">3</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/utils.html#load_Uniprot_series"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#utils.load_Uniprot_series" title="Permalink to this definition"></a></dt>
+<dd><p>Load a series of protein sequences from the Uniprot with pre-processing.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>series_fp</strong> (<a class="reference external" href="https://docs.python.org/3.6/library/stdtypes.html#str" title="(in Python v3.6)"><em>str</em></a>) – <p>filepath to protein series.
+- either <code class="file docutils literal notranslate"><span class="pre">.fasta</span></code> file with multiple proteins, e.g. BLAST output, or one directory with multiple</p>
+<blockquote>
+<div><p><code class="file docutils literal notranslate"><span class="pre">.fasta</span></code> files).</p>
+</div></blockquote>
+</p></li>
+<li><p><strong>collapse_org</strong> (<a class="reference external" href="https://docs.python.org/3.6/library/functions.html#bool" title="(in Python v3.6)"><em>bool</em></a>) – <p>collapse multiple sequences belonging to the same organism or not.
+- If <cite>True</cite>, then collapse based on the following criteria:</p>
+<blockquote>
+<div><ul>
+<li><p>If <code class="code docutils literal notranslate"><span class="pre">tab_fp</span></code> supplied, pick “reviewed” sequence of the organism;</p></li>
+</ul>
+<p>otherwise, pick the sequence with the lowest PE.</p>
+<ul>
+<li><p>If still exists multiple sequences, pick the longest one.</p></li>
+</ul>
+</div></blockquote>
+</p></li>
+<li><p><strong>tab_fp</strong> (<a class="reference external" href="https://docs.python.org/3.6/library/stdtypes.html#str" title="(in Python v3.6)"><em>str</em></a>) – use “reviewed” information in Uniprot tab summary if supplied.</p></li>
+<li><p><strong>max_PE</strong> (<a class="reference external" href="https://docs.python.org/3.6/library/functions.html#int" title="(in Python v3.6)"><em>int</em></a>) – maximum protein evidence level, default 3.</p></li>
+<li><p><strong>**kwargs</strong> – other parameters for loading protein series.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>UniProt protein sequences.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="utils.amend_des">
+<span class="sig-prename descclassname"><span class="pre">utils.</span></span><span class="sig-name descname"><span class="pre">amend_des</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">raw_seqs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alignment</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/utils.html#amend_des"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#utils.amend_des" title="Permalink to this definition"></a></dt>
+<dd><p>Flow description in raw sequences into alignment.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>raw_seqs</strong> (<a class="reference external" href="https://docs.python.org/3.6/library/stdtypes.html#dict" title="(in Python v3.6)"><em>dict</em></a>) – sequence dictionary.</p></li>
+<li><p><strong>alignment</strong> (<a class="reference external" href="https://biopython.org/docs/latest/api/Bio.Align.html#Bio.Align.MultipleSeqAlignment" title="(in Biopython v1.79)"><em>Bio.Align.MultipleSeqAlignment</em></a>) – alignment amend with metadata.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="utils.convert_aln">
+<span class="sig-prename descclassname"><span class="pre">utils.</span></span><span class="sig-name descname"><span class="pre">convert_aln</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">alignment</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/utils.html#convert_aln"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#utils.convert_aln" title="Permalink to this definition"></a></dt>
+<dd><p>Replace <code class="code docutils literal notranslate"><span class="pre">.</span></code> in <code class="file docutils literal notranslate"><span class="pre">.fasta</span></code> alignment with <code class="code docutils literal notranslate"><span class="pre">-</span></code>. Also uppercase each char.</p>
+</dd></dl>
+
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="../index.html" class="btn btn-neutral float-left" title="Welcome to DAMPSA’s documentation!" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Yifan Gui.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

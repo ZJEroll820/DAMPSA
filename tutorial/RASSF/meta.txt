@@ -1,0 +1,11 @@
+Entry	Entry name	Status	Protein names	Gene names	Organism	Length
+Q9NS23	RASF1_HUMAN	reviewed	Ras association domain-containing protein 1	RASSF1 RDA32	Homo sapiens (Human)	344
+Q86WH2	RASF3_HUMAN	reviewed	Ras association domain-containing protein 3	RASSF3	Homo sapiens (Human)	238
+Q8WWW0	RASF5_HUMAN	reviewed	Ras association domain-containing protein 5 (New ras effector 1) (Regulator for cell adhesion and polarization enriched in lymphoid tissues) (RAPL)	RASSF5 NORE1 RAPL	Homo sapiens (Human)	418
+P50749	RASF2_HUMAN	reviewed	Ras association domain-containing protein 2	RASSF2 CENP-34 KIAA0168	Homo sapiens (Human)	326
+A6NK89	RASFA_HUMAN	reviewed	Ras association domain-containing protein 10	RASSF10	Homo sapiens (Human)	507
+Q02833	RASF7_HUMAN	reviewed	Ras association domain-containing protein 7 (HRAS1-related cluster protein 1)	RASSF7 C11orf13 HRC1	Homo sapiens (Human)	373
+Q9H2L5	RASF4_HUMAN	reviewed	Ras association domain-containing protein 4	RASSF4 AD037	Homo sapiens (Human)	321
+O75901	RASF9_HUMAN	reviewed	Ras association domain-containing protein 9 (PAM COOH-terminal interactor protein 1) (P-CIP1) (Peptidylglycine alpha-amidating monooxygenase COOH-terminal interactor)	RASSF9 PAMCI PCIP1	Homo sapiens (Human)	435
+Q6ZTQ3	RASF6_HUMAN	reviewed	Ras association domain-containing protein 6	RASSF6	Homo sapiens (Human)	369
+Q8NHQ8	RASF8_HUMAN	reviewed	Ras association domain-containing protein 8 (Carcinoma-associated protein HOJ-1)	RASSF8 C12orf2	Homo sapiens (Human)	419

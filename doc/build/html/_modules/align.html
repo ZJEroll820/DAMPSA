@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>align &mdash; DAMPSA 1.0 documentation</title>
+      <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+        <script src="../_static/jquery.js"></script>
+        <script src="../_static/underscore.js"></script>
+        <script src="../_static/doctools.js"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="../index.html" class="icon icon-home"> DAMPSA
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../API/contents.html">API reference</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">DAMPSA</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home"></a> &raquo;</li>
+          <li><a href="index.html">Module code</a> &raquo;</li>
+      <li>align</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for align</h1><div class="highlight"><pre>
+<span></span><span class="c1"># Author: Roll 820</span>
+
+<span class="kn">from</span> <span class="nn">Bio.Align.Applications</span> <span class="kn">import</span> <span class="n">ClustalOmegaCommandline</span>
+<span class="kn">from</span> <span class="nn">Bio.Application</span> <span class="kn">import</span> <span class="n">ApplicationError</span>
+<span class="kn">from</span> <span class="nn">Bio.Align</span> <span class="kn">import</span> <span class="n">MultipleSeqAlignment</span><span class="p">,</span> <span class="n">AlignInfo</span>
+<span class="kn">from</span> <span class="nn">Bio</span> <span class="kn">import</span> <span class="n">AlignIO</span><span class="p">,</span> <span class="n">SeqIO</span>
+<span class="kn">from</span> <span class="nn">Bio.Seq</span> <span class="kn">import</span> <span class="n">Seq</span>
+<span class="kn">from</span> <span class="nn">Bio.SeqRecord</span> <span class="kn">import</span> <span class="n">SeqRecord</span>
+<span class="kn">import</span> <span class="nn">uuid</span>
+<span class="kn">import</span> <span class="nn">copy</span>
+<span class="kn">import</span> <span class="nn">subprocess</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">re</span>
+<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+
+<span class="kn">from</span> <span class="nn">external.alignment.alignment.align</span> <span class="kn">import</span> <span class="n">multi_sequence_alignment</span>
+
+
+<div class="viewcode-block" id="align_block"><a class="viewcode-back" href="../API/contents.html#align.align_block">[docs]</a><span class="k">def</span> <span class="nf">align_block</span><span class="p">(</span><span class="n">seqs</span><span class="p">,</span> <span class="n">profile</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s1">&#39;single&#39;</span><span class="p">,</span> <span class="n">app</span><span class="o">=</span><span class="s1">&#39;clustalo&#39;</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Align a block of sequences with selected aligner.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        seqs (dict or list): dictionary or list of :class:`Bio.SeqRecord`.</span>
+<span class="sd">        profile (dict): :class:`Bio.SegRecord` used to generate a profile, use in ``profile`` mode.</span>
+<span class="sd">        mode (str): either ``single`` or ``profile``.</span>
+<span class="sd">        app (str): either ``clustalo`` or ``mafft``. Only applied to ``single`` mode.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        Aligned sequence block.</span>
+
+<span class="sd">    Note:</span>
+<span class="sd">        - In the ``profile`` mode, you can only use `clustalo`.</span>
+<span class="sd">        - In the ``single`` mode, you can choose to use `clustalo` or `mafft l-ens-i`.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">align</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="k">if</span> <span class="n">mode</span> <span class="o">==</span> <span class="s1">&#39;profile&#39;</span> <span class="ow">and</span> <span class="n">profile</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;With profile mode, must supply sequences to generate the profile.&#39;</span><span class="p">)</span>
+    
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">seqs</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+        <span class="n">seqs</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">seqs</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>
+
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">seqs</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span> <span class="ow">and</span> <span class="n">mode</span> <span class="o">==</span> <span class="s1">&#39;single&#39;</span><span class="p">:</span>
+        <span class="c1"># only one sequence, no need to align</span>
+        <span class="k">return</span> <span class="n">MultipleSeqAlignment</span><span class="p">(</span><span class="n">seqs</span><span class="p">)</span>
+
+    <span class="n">filename</span> <span class="o">=</span> <span class="n">uuid</span><span class="o">.</span><span class="n">uuid4</span><span class="p">()</span><span class="o">.</span><span class="n">hex</span>
+    <span class="n">in_file</span> <span class="o">=</span> <span class="s1">&#39;.&#39;</span> <span class="o">+</span> <span class="n">filename</span> <span class="o">+</span> <span class="s1">&#39;.fasta&#39;</span>
+    <span class="n">SeqIO</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">seqs</span><span class="p">,</span> <span class="n">in_file</span><span class="p">,</span> <span class="s1">&#39;fasta&#39;</span><span class="p">)</span>
+    
+    <span class="k">if</span> <span class="n">mode</span> <span class="o">==</span> <span class="s1">&#39;profile&#39;</span><span class="p">:</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">seqs</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">flag</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">flag</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="n">profile_file</span> <span class="o">=</span> <span class="s1">&#39;.&#39;</span><span class="o">+</span><span class="n">filename</span><span class="o">+</span><span class="s1">&#39;_pfl.fasta&#39;</span>
+        <span class="n">SeqIO</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">profile</span><span class="p">,</span> <span class="n">profile_file</span><span class="p">,</span> <span class="s1">&#39;fasta&#39;</span><span class="p">)</span>
+        
+    <span class="n">out_file</span> <span class="o">=</span> <span class="s1">&#39;.&#39;</span> <span class="o">+</span> <span class="n">filename</span> <span class="o">+</span> <span class="s1">&#39;_aln.fasta&#39;</span>
+    <span class="n">skip</span> <span class="o">=</span> <span class="kc">False</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">mode</span> <span class="o">==</span> <span class="s1">&#39;single&#39;</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">app</span> <span class="o">==</span> <span class="s1">&#39;mafft&#39;</span><span class="p">:</span>
+                <span class="n">cmd</span> <span class="o">=</span> <span class="s1">&#39;linsi --quiet </span><span class="si">{}</span><span class="s1"> &gt; </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">in_file</span><span class="p">,</span> <span class="n">out_file</span><span class="p">)</span> <span class="c1"># MAFFT aligner</span>
+                <span class="n">_</span> <span class="o">=</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">cmd</span><span class="p">,</span> <span class="n">shell</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">clustalomega_cline</span> <span class="o">=</span> <span class="n">ClustalOmegaCommandline</span><span class="p">(</span><span class="n">infile</span><span class="o">=</span><span class="n">in_file</span><span class="p">,</span>
+                                                   <span class="n">outfile</span><span class="o">=</span><span class="n">out_file</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">auto</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+                <span class="n">clustalomega_cline</span><span class="p">()</span>
+        <span class="k">elif</span> <span class="n">mode</span> <span class="o">==</span> <span class="s1">&#39;profile&#39;</span><span class="p">:</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">flag</span><span class="p">:</span>
+                <span class="n">cmd</span> <span class="o">=</span> <span class="s1">&#39;clustalo -i </span><span class="si">{}</span><span class="s1"> --p1 </span><span class="si">{}</span><span class="s1"> --is-profile -o </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">in_file</span><span class="p">,</span> 
+                                                        <span class="n">profile_file</span><span class="p">,</span> <span class="n">out_file</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">cmd</span> <span class="o">=</span> <span class="s1">&#39;clustalo --p1 </span><span class="si">{}</span><span class="s1"> --p2 </span><span class="si">{}</span><span class="s1"> --is-profile -o </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">in_file</span><span class="p">,</span> 
+                                                        <span class="n">profile_file</span><span class="p">,</span> <span class="n">out_file</span><span class="p">)</span>
+            <span class="n">_</span> <span class="o">=</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">cmd</span><span class="p">,</span> <span class="n">shell</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="k">except</span> <span class="n">ApplicationError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">re</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="s1">&#39;forcing Viterbi&#39;</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">)):</span>
+            <span class="n">to_align</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span><span class="nb">list</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">seq</span><span class="p">)),</span> <span class="n">seqs</span><span class="p">))</span>
+            <span class="n">aligned</span> <span class="o">=</span> <span class="n">multi_sequence_alignment</span><span class="p">(</span><span class="n">to_align</span><span class="p">,</span> <span class="n">gap_penalty</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+            <span class="n">aligned</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">aligned</span><span class="o">.</span><span class="n">alignment</span><span class="p">))</span>
+            <span class="n">aln_dic</span> <span class="o">=</span> <span class="p">{}</span>
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">aligned</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]):</span>
+                <span class="n">aln_dic</span><span class="p">[</span><span class="s1">&#39;&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">aligned</span><span class="p">[</span><span class="n">i</span><span class="p">,:])</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39;_&#39;</span><span class="p">,</span><span class="s1">&#39;&#39;</span><span class="p">)]</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">aligned</span><span class="p">[</span><span class="n">i</span><span class="p">,:])</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39;_&#39;</span><span class="p">,</span><span class="s1">&#39;-&#39;</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">to_align</span><span class="p">)):</span>
+                <span class="n">seqs</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">seq</span> <span class="o">=</span> <span class="n">Seq</span><span class="p">(</span><span class="n">aln_dic</span><span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="n">seqs</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">seq</span><span class="p">)])</span>
+            <span class="n">align</span> <span class="o">=</span> <span class="n">MultipleSeqAlignment</span><span class="p">(</span><span class="n">seqs</span><span class="p">)</span>
+            <span class="n">skip</span> <span class="o">=</span> <span class="kc">True</span>
+    <span class="k">finally</span><span class="p">:</span>
+        <span class="n">_</span> <span class="o">=</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="s1">&#39;rm &#39;</span> <span class="o">+</span> <span class="n">in_file</span><span class="p">,</span> <span class="n">shell</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">mode</span> <span class="o">==</span> <span class="s1">&#39;profile&#39;</span><span class="p">:</span>
+            <span class="n">_</span> <span class="o">=</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="s1">&#39;rm &#39;</span> <span class="o">+</span> <span class="n">profile_file</span><span class="p">,</span> <span class="n">shell</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">skip</span><span class="p">:</span>
+        <span class="n">align</span> <span class="o">=</span> <span class="n">AlignIO</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="n">out_file</span><span class="p">,</span> <span class="s2">&quot;fasta&quot;</span><span class="p">)</span>
+        <span class="n">_</span> <span class="o">=</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="s1">&#39;rm &#39;</span> <span class="o">+</span> <span class="n">out_file</span><span class="p">,</span> <span class="n">shell</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">align</span></div>
+
+
+<div class="viewcode-block" id="concatenate_align_block"><a class="viewcode-back" href="../API/contents.html#align.concatenate_align_block">[docs]</a><span class="k">def</span> <span class="nf">concatenate_align_block</span><span class="p">(</span><span class="n">chain</span><span class="p">,</span> <span class="n">domain_align</span><span class="p">,</span> <span class="n">linker_align</span><span class="p">,</span> <span class="n">all_id</span><span class="p">,</span> <span class="n">escape</span><span class="o">=</span><span class="s1">&#39;null&#39;</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Connect alignment blocks</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        chain (list): order of alignment blocks.</span>
+<span class="sd">        domain_align (dict): alignment of each domain block.</span>
+<span class="sd">        linker_align (dict): alignment of each linker (and N/C overhang) block.</span>
+<span class="sd">        all_id (list): list of all sequence ids.</span>
+<span class="sd">        escape (str): empty alignment block that cannot be chained, default :code:&#39;null&#39;.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        Concatenated alignment block.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">_check_aln</span><span class="p">(</span><span class="n">align_set</span><span class="p">,</span> <span class="n">all_id</span><span class="p">,</span> <span class="n">escape</span><span class="o">=</span><span class="s1">&#39;null&#39;</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Check missing sequences in the alignment block</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            align_set (dict): a group of alignment blocks.</span>
+<span class="sd">            all_id (list): all valid sequences involved in this round of alignment.</span>
+<span class="sd">            escape (str): the name of alignment blocks no need to check.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            A group of alignment blocks with missing sequences padded.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">align_sets</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="n">align_set</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">align_sets</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+            <span class="n">aln_id</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="n">aln</span> <span class="o">=</span> <span class="n">align_sets</span><span class="p">[</span><span class="n">k</span><span class="p">]</span>
+            <span class="k">if</span> <span class="n">k</span> <span class="o">!=</span> <span class="n">escape</span><span class="p">:</span>
+                <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">aln</span><span class="p">:</span>
+                    <span class="n">aln_id</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">i</span><span class="o">.</span><span class="n">id</span><span class="p">)</span>
+                <span class="n">to_add</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">setdiff1d</span><span class="p">(</span><span class="n">all_id</span><span class="p">,</span> <span class="n">aln_id</span><span class="p">))</span>
+                <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">to_add</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                    <span class="n">len_aln</span> <span class="o">=</span> <span class="n">aln</span><span class="o">.</span><span class="n">get_alignment_length</span><span class="p">()</span>
+                    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">to_add</span><span class="p">:</span>
+                        <span class="n">aln</span><span class="o">.</span><span class="n">extend</span><span class="p">([</span><span class="n">SeqRecord</span><span class="p">(</span><span class="s1">&#39;-&#39;</span> <span class="o">*</span> <span class="n">len_aln</span><span class="p">,</span> <span class="nb">id</span><span class="o">=</span><span class="n">i</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;_&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="n">k</span><span class="p">,</span> <span class="n">i</span><span class="p">]))])</span>
+                <span class="n">aln</span><span class="o">.</span><span class="n">sort</span><span class="p">()</span>
+            <span class="n">align_sets</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="n">aln</span>
+        <span class="k">return</span> <span class="n">align_sets</span>
+
+    <span class="n">domain_align</span> <span class="o">=</span> <span class="n">_check_aln</span><span class="p">(</span><span class="n">domain_align</span><span class="p">,</span> <span class="n">all_id</span><span class="p">)</span>
+    <span class="n">linker_align</span> <span class="o">=</span> <span class="n">_check_aln</span><span class="p">(</span><span class="n">linker_align</span><span class="p">,</span> <span class="n">all_id</span><span class="p">)</span>
+    <span class="n">final_align</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">chain</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">i</span> <span class="o">==</span> <span class="s1">&#39;null&#39;</span><span class="p">:</span>
+            <span class="k">continue</span>
+        <span class="k">if</span> <span class="n">i</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;_&#39;</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">linker_align</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+                <span class="n">final_align</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">linker_align</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">final_align</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">domain_align</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
+    
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">final_align</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">final_align</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="nb">len</span><span class="p">(</span><span class="n">final_align</span><span class="p">)):</span>
+            <span class="n">final_align</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+=</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="n">final_align</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
+
+    <span class="k">return</span> <span class="n">final_align</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span></div>
+
+
+<div class="viewcode-block" id="refine_align_edge"><a class="viewcode-back" href="../API/contents.html#align.refine_align_edge">[docs]</a><span class="k">def</span> <span class="nf">refine_align_edge</span><span class="p">(</span><span class="n">alignment</span><span class="p">,</span> <span class="n">domain_table</span><span class="p">,</span> <span class="n">search_range</span><span class="o">=</span><span class="mi">10</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Refine the edge between linker and domains</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        alignment (Bio.Align.MultipleSeqAlignment): alignment matrix to refine.</span>
+<span class="sd">        domain_table (pandas.DataFrame): table storing domain information.</span>
+<span class="sd">        search_range (int): only backward search domain end for 10 residues</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">         Edge-refined alignments.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># alignment = AlignIO.read(&#39;../data/src/DAMPSA_aln.fasta&#39;, &#39;fasta&#39;)</span>
+    <span class="c1"># domain_table = pd.read_table(&#39;../data/src/src_filtered_dom.txt&#39;, sep=&#39;\t)</span>
+    
+    <span class="n">mtx</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">alignment</span><span class="p">)</span>
+    <span class="c1"># get the consensus sequence</span>
+    <span class="n">summary_align</span> <span class="o">=</span> <span class="n">AlignInfo</span><span class="o">.</span><span class="n">SummaryInfo</span><span class="p">(</span><span class="n">alignment</span><span class="p">)</span>
+    <span class="n">consensus</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">summary_align</span><span class="o">.</span><span class="n">dumb_consensus</span><span class="p">())</span>
+    
+    <span class="c1"># identify sequences that have all domain/linkers</span>
+    <span class="n">ndom</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span><span class="n">domain_table</span><span class="o">.</span><span class="n">clan</span><span class="p">))</span>
+    <span class="n">mid</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">np</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span><span class="n">domain_table</span><span class="o">.</span><span class="n">seq_id</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">domain_table</span><span class="p">[</span><span class="n">domain_table</span><span class="o">.</span><span class="n">seq_id</span> <span class="o">==</span> <span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="n">ndom</span><span class="p">:</span>
+            <span class="n">mid</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">i</span><span class="p">)</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">mid</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Cannot find a master sequence.&#39;</span><span class="p">)</span>
+    <span class="n">dt</span> <span class="o">=</span> <span class="n">domain_table</span><span class="p">[</span><span class="n">domain_table</span><span class="o">.</span><span class="n">seq_id</span><span class="o">.</span><span class="n">isin</span><span class="p">(</span><span class="n">mid</span><span class="p">)]</span>
+    <span class="n">ids</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="n">count</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="k">for</span> <span class="n">aln</span> <span class="ow">in</span> <span class="n">alignment</span><span class="p">:</span>
+        <span class="n">ids</span><span class="p">[</span><span class="n">aln</span><span class="o">.</span><span class="n">id</span><span class="p">]</span> <span class="o">=</span> <span class="n">count</span>
+        <span class="n">count</span> <span class="o">+=</span> <span class="mi">1</span>
+
+    <span class="c1"># identify the coordinate in alignment matrix</span>
+    <span class="n">dom_end</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">dm</span> <span class="ow">in</span> <span class="n">np</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span><span class="n">dt</span><span class="o">.</span><span class="n">clan</span><span class="p">):</span>
+        <span class="n">dt_sub</span> <span class="o">=</span> <span class="n">dt</span><span class="p">[</span><span class="n">dt</span><span class="o">.</span><span class="n">clan</span> <span class="o">==</span> <span class="n">dm</span><span class="p">]</span>
+        <span class="n">j</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">master_seq</span> <span class="o">=</span> <span class="n">alignment</span><span class="p">[</span><span class="n">ids</span><span class="p">[</span><span class="n">dt_sub</span><span class="o">.</span><span class="n">seq_id</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="mi">0</span><span class="p">]]]</span>
+        <span class="n">ed</span> <span class="o">=</span> <span class="n">dt_sub</span><span class="o">.</span><span class="n">env_end</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">all_ids</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">dt_sub</span><span class="p">[</span><span class="s1">&#39;seq_id&#39;</span><span class="p">]:</span>
+            <span class="n">all_ids</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">ids</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
+        <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">master_seq</span><span class="p">)):</span>
+                <span class="k">if</span> <span class="n">master_seq</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">!=</span> <span class="s1">&#39;-&#39;</span><span class="p">:</span>
+                    <span class="n">j</span> <span class="o">+=</span> <span class="mi">1</span>
+                <span class="k">if</span> <span class="n">j</span> <span class="o">==</span> <span class="n">ed</span><span class="p">:</span>
+                    <span class="n">dom_end</span><span class="p">[</span><span class="n">dm</span><span class="p">]</span> <span class="o">=</span> <span class="n">i</span>
+                    <span class="k">break</span>
+            <span class="c1"># calculate coordinate in all seqs</span>
+            <span class="n">len_cur</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">apply_along_axis</span><span class="p">(</span><span class="k">lambda</span> 
+                                          <span class="n">x</span><span class="p">:</span><span class="nb">len</span><span class="p">(</span><span class="s1">&#39;&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">x</span><span class="p">)</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39;-&#39;</span><span class="p">,</span><span class="s1">&#39;&#39;</span><span class="p">)),</span>
+                                          <span class="mi">1</span><span class="p">,</span> <span class="n">mtx</span><span class="p">[</span><span class="n">all_ids</span><span class="p">,:</span><span class="n">i</span><span class="p">])</span>
+            <span class="n">len_cur</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">transpose</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">dt_sub</span><span class="o">.</span><span class="n">env_end</span><span class="p">,</span> <span class="n">len_cur</span><span class="o">+</span><span class="mi">1</span><span class="p">]))</span>
+            <span class="n">beyond_seq</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">len_cur</span><span class="p">[:,</span><span class="mi">0</span><span class="p">]</span> <span class="o">&gt;</span> <span class="n">len_cur</span><span class="p">[:,</span><span class="mi">1</span><span class="p">])[</span><span class="mi">0</span><span class="p">])</span>
+            <span class="k">if</span> <span class="n">beyond_seq</span><span class="p">:</span>
+                <span class="n">master_seq</span> <span class="o">=</span> <span class="n">alignment</span><span class="p">[</span><span class="n">ids</span><span class="p">[</span><span class="n">dt_sub</span><span class="o">.</span><span class="n">seq_id</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="n">beyond_seq</span><span class="p">[</span><span class="mi">0</span><span class="p">]]]]</span>
+                <span class="n">ed</span> <span class="o">=</span> <span class="n">dt_sub</span><span class="o">.</span><span class="n">env_end</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="n">beyond_seq</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span>
+                <span class="n">j</span> <span class="o">=</span> <span class="mi">0</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">break</span>
+    
+    <span class="c1"># for each domain end site, search if anything in the linker can fill gaps.</span>
+    <span class="k">for</span> <span class="n">dm</span> <span class="ow">in</span> <span class="n">dom_end</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+        <span class="n">ed</span> <span class="o">=</span> <span class="n">dom_end</span><span class="p">[</span><span class="n">dm</span><span class="p">]</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">mtx</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]):</span>
+            <span class="k">if</span> <span class="n">mtx</span><span class="p">[</span><span class="n">i</span><span class="p">,</span><span class="n">ed</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;-&#39;</span><span class="p">:</span>
+                <span class="c1"># if there is any gap, try to fill it</span>
+                <span class="n">inv_seq</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">mtx</span><span class="p">[</span><span class="n">i</span><span class="p">,</span><span class="n">ed</span><span class="o">-</span><span class="n">search_range</span><span class="o">+</span><span class="mi">1</span><span class="p">:</span><span class="n">ed</span><span class="o">+</span><span class="mi">1</span><span class="p">])[::</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+                <span class="n">t</span> <span class="o">=</span> <span class="mi">0</span>
+                <span class="k">while</span> <span class="n">inv_seq</span><span class="p">[</span><span class="n">t</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;-&#39;</span><span class="p">:</span>
+                    <span class="n">t</span> <span class="o">+=</span> <span class="mi">1</span>
+                    <span class="k">if</span> <span class="n">t</span> <span class="o">==</span> <span class="n">search_range</span><span class="p">:</span>
+                        <span class="k">break</span>
+                <span class="c1"># get first non gap residue</span>
+                <span class="n">p</span> <span class="o">=</span> <span class="mi">1</span>
+                <span class="n">flg</span> <span class="o">=</span> <span class="kc">False</span>
+                <span class="k">while</span> <span class="n">mtx</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="n">ed</span> <span class="o">+</span> <span class="n">p</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;-&#39;</span><span class="p">:</span>
+                    <span class="n">p</span> <span class="o">+=</span> <span class="mi">1</span>
+                    <span class="k">if</span> <span class="n">ed</span> <span class="o">+</span> <span class="n">p</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="n">consensus</span><span class="p">):</span>
+                        <span class="n">flg</span> <span class="o">=</span> <span class="kc">True</span>
+                        <span class="k">break</span>
+                <span class="k">if</span> <span class="n">flg</span><span class="p">:</span>
+                    <span class="k">continue</span>
+                <span class="c1"># modify if match consensus</span>
+                <span class="n">o</span> <span class="o">=</span> <span class="n">q</span> <span class="o">=</span> <span class="mi">1</span>
+                <span class="n">flg</span> <span class="o">=</span> <span class="kc">False</span>
+                <span class="k">while</span> <span class="n">q</span> <span class="o">&lt;=</span> <span class="n">t</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="n">consensus</span><span class="p">[</span><span class="n">ed</span> <span class="o">-</span> <span class="n">t</span> <span class="o">+</span> <span class="n">q</span><span class="p">]</span> <span class="o">==</span> <span class="n">mtx</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="n">ed</span> <span class="o">+</span> <span class="n">p</span> <span class="o">+</span> <span class="n">o</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]:</span>
+                        <span class="n">flg</span> <span class="o">=</span> <span class="kc">True</span>
+                        <span class="n">mtx</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="n">ed</span> <span class="o">-</span> <span class="n">t</span> <span class="o">+</span> <span class="n">q</span><span class="p">]</span> <span class="o">=</span> <span class="n">mtx</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="n">ed</span> <span class="o">+</span> <span class="n">p</span> <span class="o">+</span> <span class="n">o</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]</span>
+                        <span class="n">mtx</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="n">ed</span> <span class="o">+</span> <span class="n">p</span> <span class="o">+</span> <span class="n">o</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;-&#39;</span>
+                        <span class="n">o</span> <span class="o">+=</span> <span class="mi">1</span>
+                    <span class="k">elif</span> <span class="n">flg</span><span class="p">:</span>
+                        <span class="k">break</span>
+                    <span class="n">q</span> <span class="o">+=</span> <span class="mi">1</span>
+                    <span class="k">if</span> <span class="n">ed</span> <span class="o">+</span> <span class="n">p</span> <span class="o">+</span> <span class="n">o</span> <span class="o">-</span> <span class="mi">1</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="n">consensus</span><span class="p">):</span>
+                        <span class="k">break</span>
+                    
+    <span class="n">new_aln</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">mtx</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]):</span>
+        <span class="n">new_aln</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">SeqRecord</span><span class="p">(</span><span class="n">Seq</span><span class="p">(</span><span class="s1">&#39;&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">mtx</span><span class="p">[</span><span class="n">i</span><span class="p">,:])),</span> <span class="nb">id</span><span class="o">=</span><span class="n">alignment</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">id</span><span class="p">,</span>
+                                 <span class="n">name</span><span class="o">=</span><span class="n">alignment</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> 
+                                 <span class="n">description</span><span class="o">=</span><span class="n">alignment</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">description</span><span class="p">))</span>
+    <span class="n">new_aln</span> <span class="o">=</span> <span class="n">MultipleSeqAlignment</span><span class="p">(</span><span class="n">new_aln</span><span class="p">)</span>
+    
+    <span class="c1"># AlignIO.write(new_aln, &#39;refine.fasta&#39;, &#39;fasta&#39;)</span>
+    
+    <span class="k">return</span> <span class="n">new_aln</span></div>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Yifan Gui.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

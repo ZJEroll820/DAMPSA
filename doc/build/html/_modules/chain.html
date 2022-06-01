@@ -1,0 +1,535 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>chain &mdash; DAMPSA 1.0 documentation</title>
+      <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+        <script src="../_static/jquery.js"></script>
+        <script src="../_static/underscore.js"></script>
+        <script src="../_static/doctools.js"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="../index.html" class="icon icon-home"> DAMPSA
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../API/contents.html">API reference</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">DAMPSA</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home"></a> &raquo;</li>
+          <li><a href="index.html">Module code</a> &raquo;</li>
+      <li>chain</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for chain</h1><div class="highlight"><pre>
+<span></span><span class="c1"># Author: Roll 820</span>
+
+<span class="kn">import</span> <span class="nn">logging</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">copy</span>
+<span class="kn">from</span> <span class="nn">Bio.SeqRecord</span> <span class="kn">import</span> <span class="n">SeqRecord</span>
+<span class="kn">from</span> <span class="nn">Bio.Seq</span> <span class="kn">import</span> <span class="n">Seq</span>
+<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+<span class="kn">import</span> <span class="nn">re</span>
+
+<span class="kn">from</span> <span class="nn">align</span> <span class="kn">import</span> <span class="n">align_block</span>
+<span class="kn">from</span> <span class="nn">external.alignment.alignment.align</span> <span class="kn">import</span> <span class="n">multi_sequence_alignment</span>
+
+
+<div class="viewcode-block" id="get_block_seq"><a class="viewcode-back" href="../API/contents.html#chain.get_block_seq">[docs]</a><span class="k">def</span> <span class="nf">get_block_seq</span><span class="p">(</span><span class="n">seqs</span><span class="p">,</span> <span class="n">domain_table</span><span class="p">,</span> <span class="n">dcol</span><span class="o">=</span><span class="s1">&#39;clan&#39;</span><span class="p">,</span>
+                  <span class="n">start_nm</span><span class="o">=</span><span class="s1">&#39;env_start&#39;</span><span class="p">,</span> <span class="n">end_nm</span><span class="o">=</span><span class="s1">&#39;env_end&#39;</span><span class="p">,</span>
+                  <span class="n">get_mask</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">check_linker_len</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Get sequence for specific domain.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        seqs (dict): dictionary of :class:`Bio.SeqRecord`.</span>
+<span class="sd">        domain_table (pandas.DataFrame): must have the following columns:</span>
+<span class="sd">            :code:`seq_id`: sequence ID;</span>
+<span class="sd">            :code:`start_nm`: start of domain;</span>
+<span class="sd">            :code:`end_nm`: end of domain;</span>
+<span class="sd">            :code:`dcol`: column refer to the domain.</span>
+<span class="sd">        dcol (str): config the name of the column referring to the domain ID.</span>
+<span class="sd">        start_nm (str): config the name of the column referring to the domain start.</span>
+<span class="sd">        end_nm (str): config the name of the column referring to the domain end.</span>
+<span class="sd">        get_mask (bool): whether mask domain with * and output sequences.</span>
+<span class="sd">        check_linker_len (bool): whether to check overlong linker.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        Sequences corresponding to each domain block (dict).</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="s1">&#39;DAMPSA.domain&#39;</span><span class="p">)</span>
+
+    <span class="n">domain_table</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="n">domain_table</span><span class="p">)</span>
+    <span class="n">seqs</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="n">seqs</span><span class="p">)</span>
+    <span class="n">miss_count</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">all_table</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">domain_table</span><span class="p">[</span><span class="s1">&#39;seq_id&#39;</span><span class="p">])</span>
+    <span class="n">coll</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="n">coll_link</span> <span class="o">=</span> <span class="p">{}</span>
+
+    <span class="n">chain</span><span class="p">,</span> <span class="n">domain_table</span><span class="p">,</span> <span class="n">gap_dom</span> <span class="o">=</span> <span class="n">get_chain_by_align</span><span class="p">(</span><span class="n">domain_table</span><span class="p">,</span> <span class="n">dcol</span><span class="o">=</span><span class="n">dcol</span><span class="p">,</span> <span class="n">start_nm</span><span class="o">=</span><span class="n">start_nm</span><span class="p">,</span> <span class="n">gap_penalty_init</span><span class="o">=</span><span class="mf">0.4</span><span class="p">)</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s1">&#39;</span><span class="si">{}</span><span class="s1"> sequences seem to have gapped domains. Align as a whole later.&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">gap_dom</span><span class="p">)))</span>
+
+    <span class="c1"># chain = get_chain(domain_table, dcol=dcol, start_nm=start_nm, end_nm=end_nm) # TODO</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">np</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span><span class="n">domain_table</span><span class="p">[</span><span class="n">dcol</span><span class="p">]):</span>
+        <span class="n">coll</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">np</span><span class="o">.</span><span class="n">setdiff1d</span><span class="p">(</span><span class="n">chain</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span><span class="n">domain_table</span><span class="p">[</span><span class="n">dcol</span><span class="p">])):</span>
+        <span class="n">coll_link</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+
+    <span class="c1"># Sort by chain domains</span>
+    <span class="n">dom</span> <span class="o">=</span> <span class="n">chain</span><span class="p">[</span><span class="mi">1</span><span class="p">::</span><span class="mi">2</span><span class="p">]</span>
+    <span class="n">domain_table</span><span class="p">[</span><span class="n">dcol</span><span class="p">]</span> <span class="o">=</span> <span class="n">domain_table</span><span class="p">[</span><span class="n">dcol</span><span class="p">]</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="s1">&#39;category&#39;</span><span class="p">)</span>
+    <span class="n">domain_table</span><span class="p">[</span><span class="n">dcol</span><span class="p">]</span> <span class="o">=</span> <span class="n">domain_table</span><span class="p">[</span><span class="n">dcol</span><span class="p">]</span><span class="o">.</span><span class="n">cat</span><span class="o">.</span><span class="n">set_categories</span><span class="p">(</span><span class="n">dom</span><span class="p">)</span>
+    <span class="n">domain_table</span> <span class="o">=</span> <span class="n">domain_table</span><span class="o">.</span><span class="n">sort_values</span><span class="p">([</span><span class="s1">&#39;seq_id&#39;</span><span class="p">,</span> <span class="n">dcol</span><span class="p">])</span>
+
+    <span class="c1"># Extract domain and linker sequences</span>
+    <span class="c1"># !!! Assume no gapped domain chain (e.g. A-B-C and A-C)</span>
+    <span class="c1"># a lookup for linker between domains</span>
+    <span class="n">lnk_up</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span><span class="nb">len</span><span class="p">(</span><span class="n">chain</span><span class="p">)</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">):</span>
+        <span class="n">lnk_up</span><span class="p">[</span><span class="s1">&#39;=&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="n">chain</span><span class="p">[</span><span class="n">i</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">chain</span><span class="p">[</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="p">]])]</span> <span class="o">=</span> <span class="n">chain</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+    <span class="n">to_rm</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">ovl_rm</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">seqs</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+        <span class="k">if</span> <span class="n">i</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">all_table</span><span class="p">:</span>
+            <span class="n">miss_count</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="n">to_rm</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">i</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">gap_dom</span><span class="p">:</span>
+            <span class="k">continue</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">sub</span> <span class="o">=</span> <span class="n">domain_table</span><span class="p">[</span><span class="n">domain_table</span><span class="p">[</span><span class="s1">&#39;seq_id&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+            <span class="n">sub</span><span class="o">.</span><span class="n">index</span> <span class="o">=</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">sub</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+            <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">sub</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]):</span>
+                <span class="n">st</span> <span class="o">=</span> <span class="n">sub</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">j</span><span class="p">,</span> <span class="n">start_nm</span><span class="p">]</span> <span class="o">-</span> <span class="mi">1</span>
+                <span class="n">ed</span> <span class="o">=</span> <span class="n">sub</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">j</span><span class="p">,</span> <span class="n">end_nm</span><span class="p">]</span>
+                <span class="k">if</span> <span class="n">j</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                    <span class="n">sub_seq</span> <span class="o">=</span> <span class="n">seqs</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">seq</span><span class="p">[:</span><span class="n">st</span><span class="p">]</span>
+                    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">sub_seq</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                        <span class="n">coll_link</span><span class="p">[</span><span class="s1">&#39;_N&#39;</span><span class="p">][</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">SeqRecord</span><span class="p">(</span><span class="n">sub_seq</span><span class="p">,</span> <span class="nb">id</span><span class="o">=</span><span class="n">i</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;_&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="s1">&#39;_N&#39;</span><span class="p">,</span> <span class="n">i</span><span class="p">]))</span>
+                <span class="k">if</span> <span class="n">j</span> <span class="o">==</span> <span class="n">sub</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">-</span> <span class="mi">1</span><span class="p">:</span>
+                    <span class="n">sub_seq</span> <span class="o">=</span> <span class="n">seqs</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">seq</span><span class="p">[</span><span class="n">ed</span><span class="p">:]</span>
+                    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">sub_seq</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                        <span class="n">coll_link</span><span class="p">[</span><span class="s1">&#39;_C&#39;</span><span class="p">][</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">SeqRecord</span><span class="p">(</span><span class="n">sub_seq</span><span class="p">,</span> <span class="nb">id</span><span class="o">=</span><span class="n">i</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;_&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="s1">&#39;_C&#39;</span><span class="p">,</span> <span class="n">i</span><span class="p">]))</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">next_st</span> <span class="o">=</span> <span class="n">sub</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">j</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="n">start_nm</span><span class="p">]</span> <span class="o">-</span> <span class="mi">1</span>
+                    <span class="k">if</span> <span class="n">next_st</span> <span class="o">&lt;</span> <span class="n">ed</span><span class="p">:</span>
+                        <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s1">&#39;Overlapping domain detected, align </span><span class="si">{}</span><span class="s1"> as a whole later.&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">i</span><span class="p">))</span>
+                        <span class="n">ovl_rm</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">i</span><span class="p">)</span>
+                        <span class="k">break</span>
+                    <span class="n">link_nm</span> <span class="o">=</span> <span class="n">lnk_up</span><span class="p">[</span><span class="s1">&#39;=&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="n">sub</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">j</span><span class="p">,</span> <span class="n">dcol</span><span class="p">],</span> <span class="n">sub</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">j</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span> <span class="n">dcol</span><span class="p">]])]</span>
+                    <span class="k">if</span> <span class="n">ed</span> <span class="o">!=</span> <span class="n">next_st</span><span class="p">:</span>
+                        <span class="n">sub_seq</span> <span class="o">=</span> <span class="n">seqs</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">seq</span><span class="p">[</span><span class="n">ed</span><span class="p">:</span><span class="n">next_st</span><span class="p">]</span>
+                        <span class="n">coll_link</span><span class="p">[</span><span class="n">link_nm</span><span class="p">][</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">SeqRecord</span><span class="p">(</span><span class="n">sub_seq</span><span class="p">,</span> <span class="nb">id</span><span class="o">=</span><span class="n">i</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;_&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="n">link_nm</span><span class="p">,</span> <span class="n">i</span><span class="p">]))</span>
+
+                <span class="n">sub_seq</span> <span class="o">=</span> <span class="n">seqs</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">seq</span><span class="p">[</span><span class="n">st</span><span class="p">:</span><span class="n">ed</span><span class="p">]</span>
+
+                <span class="k">if</span> <span class="n">get_mask</span><span class="p">:</span>
+                    <span class="c1"># mask domain with gap,</span>
+                    <span class="c1"># change in place,</span>
+                    <span class="c1"># assume that domain does not overlap!!!</span>
+                    <span class="n">sub_seq_ls</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">seqs</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">seq</span><span class="p">)</span>
+                    <span class="n">sub_seq_ls</span><span class="p">[</span><span class="n">st</span><span class="p">:</span><span class="n">ed</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;*&#39;</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">ed</span> <span class="o">-</span> <span class="n">st</span><span class="p">)]</span>
+                    <span class="n">sub_seq_ls</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">sub_seq_ls</span><span class="p">)</span>
+                    <span class="n">seqs</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">seq</span> <span class="o">=</span> <span class="n">Seq</span><span class="p">(</span><span class="n">sub_seq_ls</span><span class="p">)</span>
+
+                <span class="n">coll</span><span class="p">[</span><span class="n">sub</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">j</span><span class="p">,</span> <span class="n">dcol</span><span class="p">]][</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">SeqRecord</span><span class="p">(</span><span class="n">sub_seq</span><span class="p">,</span> <span class="nb">id</span><span class="o">=</span><span class="n">i</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;_&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="n">sub</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">j</span><span class="p">,</span> <span class="n">dcol</span><span class="p">],</span> <span class="n">i</span><span class="p">]))</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s1">&#39;</span><span class="si">{}</span><span class="s1"> sequences missing in the domain annotation table. Align as a whole later.&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">miss_count</span><span class="p">))</span>
+
+    <span class="c1"># remove information of domain-overlapping seq</span>
+    <span class="k">if</span> <span class="n">ovl_rm</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">coll</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+            <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="n">ovl_rm</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">j</span> <span class="ow">in</span> <span class="n">coll</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+                    <span class="k">del</span> <span class="n">coll</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="n">j</span><span class="p">]</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">coll_link</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+            <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="n">ovl_rm</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">j</span> <span class="ow">in</span> <span class="n">coll_link</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+                    <span class="k">del</span> <span class="n">coll_link</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="n">j</span><span class="p">]</span>
+
+    <span class="n">faulty_seq</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">if</span> <span class="n">check_linker_len</span><span class="p">:</span>
+        <span class="c1"># check if there is any overlong linker</span>
+        <span class="n">faulty_seq</span><span class="p">,</span> <span class="n">coll</span><span class="p">,</span> <span class="n">coll_link</span><span class="p">,</span> <span class="n">chain</span> <span class="o">=</span> <span class="n">refine_linker</span><span class="p">(</span><span class="n">coll</span><span class="p">,</span> <span class="n">coll_link</span><span class="p">,</span> <span class="n">chain</span><span class="p">,</span> <span class="n">domain_table</span><span class="p">)</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s1">&#39;</span><span class="si">{}</span><span class="s1"> sequences have unreliable domain annotation. Align as a whole later.&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">faulty_seq</span><span class="p">)))</span>
+
+    <span class="n">fss</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">fs</span> <span class="ow">in</span> <span class="n">faulty_seq</span> <span class="o">+</span> <span class="n">to_rm</span> <span class="o">+</span> <span class="n">gap_dom</span> <span class="o">+</span> <span class="n">ovl_rm</span><span class="p">:</span>
+        <span class="n">fss</span><span class="p">[</span><span class="n">fs</span><span class="p">]</span> <span class="o">=</span> <span class="n">seqs</span><span class="p">[</span><span class="n">fs</span><span class="p">]</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">seqs</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">2</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;No or only one sequence remained after quality control.&#39;</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">chain</span><span class="p">,</span> <span class="n">coll</span><span class="p">,</span> <span class="n">coll_link</span><span class="p">,</span> <span class="n">seqs</span><span class="p">,</span> <span class="n">fss</span><span class="p">,</span> <span class="n">domain_table</span></div>
+
+
+<div class="viewcode-block" id="add_linker_to_chain"><a class="viewcode-back" href="../API/contents.html#chain.add_linker_to_chain">[docs]</a><span class="k">def</span> <span class="nf">add_linker_to_chain</span><span class="p">(</span><span class="n">chain</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Add linker annotation like :code:`_link_1` (in order from one) to the domain chain.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">chain_link</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">ct</span> <span class="o">=</span> <span class="mi">1</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">chain</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">chain</span><span class="p">)):</span>
+            <span class="n">chain_link</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">chain</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
+            <span class="n">chain_link</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s1">&#39;_link_&#39;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">ct</span><span class="p">))</span>
+            <span class="n">ct</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="n">chain_link</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;_N&#39;</span><span class="p">]</span> <span class="o">+</span> <span class="n">chain_link</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="p">[</span><span class="s1">&#39;_C&#39;</span><span class="p">]</span>  <span class="c1"># two overhang</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">chain_link</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;_N&#39;</span><span class="p">]</span> <span class="o">+</span> <span class="n">chain</span> <span class="o">+</span> <span class="p">[</span><span class="s1">&#39;_C&#39;</span><span class="p">]</span>
+    <span class="k">return</span> <span class="n">chain_link</span></div>
+
+
+<div class="viewcode-block" id="get_chain_by_align"><a class="viewcode-back" href="../API/contents.html#chain.get_chain_by_align">[docs]</a><span class="k">def</span> <span class="nf">get_chain_by_align</span><span class="p">(</span><span class="n">domain_table</span><span class="p">,</span> <span class="n">dcol</span><span class="o">=</span><span class="s1">&#39;clan&#39;</span><span class="p">,</span> <span class="n">start_nm</span><span class="o">=</span><span class="s1">&#39;env_start&#39;</span><span class="p">,</span> <span class="n">gap_penalty_init</span><span class="o">=</span><span class="mf">0.4</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Get Clan chain from domain annotation using progressive alignment.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        gap_penalty_init (float): Initial gap penalty (0 to 1) to try progressive alignment on the chain.</span>
+<span class="sd">            If the alignment cannot separate each domain or linker in a unique column, will reduce gap penalty by half.</span>
+<span class="sd">            If failed for five rounds, will raise an error.</span>
+
+<span class="sd">    See :code:`get_block_seq` for other parameters.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">gap_penalty_init</span> <span class="o">&lt;=</span> <span class="mi">0</span> <span class="ow">or</span> <span class="n">gap_penalty_init</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Parameter gap_penalty_init should be between 0 and 1.&#39;</span><span class="p">)</span>
+
+    <span class="n">all_dom</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span><span class="n">domain_table</span><span class="p">[</span><span class="n">dcol</span><span class="p">]))</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">all_dom</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="n">chain_link</span> <span class="o">=</span> <span class="n">add_linker_to_chain</span><span class="p">(</span><span class="n">all_dom</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">chain_link</span><span class="p">,</span> <span class="n">domain_table</span><span class="p">,</span> <span class="p">[]</span>
+
+    <span class="n">to_align</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">lk</span> <span class="o">=</span> <span class="p">[]</span> <span class="c1"># lookup for unique pattern</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">np</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span><span class="n">domain_table</span><span class="p">[</span><span class="s1">&#39;seq_id&#39;</span><span class="p">]):</span>
+        <span class="n">sub</span> <span class="o">=</span> <span class="n">domain_table</span><span class="p">[</span><span class="n">domain_table</span><span class="o">.</span><span class="n">seq_id</span> <span class="o">==</span> <span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">sort_values</span><span class="p">(</span><span class="n">start_nm</span><span class="p">)</span>
+        <span class="n">dlist</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">sub</span><span class="p">[</span><span class="n">dcol</span><span class="p">])</span>
+        <span class="k">if</span> <span class="s1">&#39;=&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">dlist</span><span class="p">)</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">lk</span><span class="p">:</span>
+            <span class="n">lk</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s1">&#39;=&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">dlist</span><span class="p">))</span>
+            <span class="n">to_align</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">sub</span><span class="p">[</span><span class="n">dcol</span><span class="p">]))</span>
+
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">to_align</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="n">chain_link</span> <span class="o">=</span> <span class="n">add_linker_to_chain</span><span class="p">(</span><span class="n">to_align</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+        <span class="k">return</span> <span class="n">chain_link</span><span class="p">,</span> <span class="n">domain_table</span><span class="p">,</span> <span class="p">[]</span>
+
+    <span class="c1"># check if one column only contains one domain, if yes, divide gap penalty by half</span>
+    <span class="n">MAX_ITER</span> <span class="o">=</span> <span class="mi">5</span>
+    <span class="n">itr</span> <span class="o">=</span> <span class="mi">1</span>
+    <span class="n">flg</span> <span class="o">=</span> <span class="kc">False</span>
+    <span class="k">while</span> <span class="n">itr</span> <span class="o">&lt;=</span> <span class="n">MAX_ITER</span><span class="p">:</span>
+        <span class="n">aligned</span> <span class="o">=</span> <span class="n">multi_sequence_alignment</span><span class="p">(</span><span class="n">to_align</span><span class="p">,</span> <span class="n">gap_penalty</span><span class="o">=</span><span class="n">gap_penalty_init</span><span class="p">)</span>
+        <span class="n">aligned</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">aligned</span><span class="o">.</span><span class="n">alignment</span><span class="p">))</span>
+        <span class="n">flg2</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">aligned</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]):</span>
+            <span class="n">blk</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">setdiff1d</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span><span class="n">aligned</span><span class="p">[:,</span> <span class="n">i</span><span class="p">]),</span> <span class="s1">&#39;_&#39;</span><span class="p">))</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">blk</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="n">gap_penalty_init</span> <span class="o">/=</span> <span class="mi">2</span>
+                <span class="n">flg2</span> <span class="o">=</span> <span class="kc">True</span>
+                <span class="k">break</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">flg2</span><span class="p">:</span>
+            <span class="n">flg</span> <span class="o">=</span> <span class="kc">True</span>
+            <span class="k">break</span>
+        <span class="n">itr</span> <span class="o">+=</span> <span class="mi">1</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">flg</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s1">&#39;Two different domains in one column, failed to find a good gap penalty&#39;</span><span class="p">)</span>
+
+    <span class="n">chain</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">dup_check</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">aligned</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]):</span>
+        <span class="n">blk</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">setdiff1d</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span><span class="n">aligned</span><span class="p">[:,</span><span class="n">i</span><span class="p">]),</span> <span class="s1">&#39;_&#39;</span><span class="p">))</span>
+        <span class="k">if</span> <span class="n">blk</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="ow">in</span> <span class="n">chain</span> <span class="ow">and</span> <span class="n">blk</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">dup_check</span><span class="p">:</span>
+            <span class="c1"># duplicated domains, check later</span>
+            <span class="n">dup_check</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">blk</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+        <span class="n">chain</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">blk</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+
+    <span class="n">dup</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="n">aln</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="n">aligned</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">dup_check</span><span class="p">:</span>
+        <span class="c1"># if has duplicated domains, label as 1,2,3...; identify all pattern that contains it</span>
+        <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">dup_check</span><span class="p">:</span>
+            <span class="n">count</span> <span class="o">=</span> <span class="mi">1</span>
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">aligned</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]):</span>
+                <span class="n">nm</span> <span class="o">=</span> <span class="n">d</span> <span class="o">+</span> <span class="s1">&#39;_&#39;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">count</span><span class="p">)</span>
+                <span class="n">flg</span> <span class="o">=</span> <span class="kc">False</span>
+                <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">aligned</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]):</span>
+                    <span class="k">if</span> <span class="n">aligned</span><span class="p">[</span><span class="n">j</span><span class="p">,</span><span class="n">i</span><span class="p">]</span> <span class="o">==</span> <span class="n">d</span><span class="p">:</span>
+                        <span class="n">flg</span> <span class="o">=</span> <span class="kc">True</span>
+                        <span class="n">aligned</span><span class="p">[</span><span class="n">j</span><span class="p">,</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">nm</span>
+                <span class="k">if</span> <span class="n">flg</span><span class="p">:</span>
+                    <span class="n">chain</span><span class="p">[</span><span class="n">chain</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">d</span><span class="p">)]</span> <span class="o">=</span> <span class="n">nm</span>
+                    <span class="n">count</span> <span class="o">+=</span> <span class="mi">1</span>
+
+        <span class="c1"># duplicated domain pattern substitution</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">aligned</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]):</span>
+            <span class="n">a</span> <span class="o">=</span> <span class="s1">&#39;=&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">aln</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="n">aln</span><span class="p">[</span><span class="n">i</span><span class="p">,:]</span> <span class="o">!=</span> <span class="s1">&#39;_&#39;</span><span class="p">])</span>
+            <span class="n">b</span> <span class="o">=</span> <span class="s1">&#39;=&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">aligned</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="n">aligned</span><span class="p">[</span><span class="n">i</span><span class="p">,:]</span> <span class="o">!=</span> <span class="s1">&#39;_&#39;</span><span class="p">])</span>
+            <span class="k">if</span> <span class="n">a</span> <span class="o">!=</span> <span class="n">b</span><span class="p">:</span>
+                <span class="n">dup</span><span class="p">[</span><span class="n">a</span><span class="p">]</span> <span class="o">=</span> <span class="n">b</span>
+    
+    <span class="c1"># generate a lookup table, exclude &quot;gapped&quot; pattern (domain A-C rather than A-B-C)</span>
+    <span class="n">faulty_pattern</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">aligned</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]):</span>
+        <span class="n">a</span> <span class="o">=</span> <span class="s1">&#39;=&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">aln</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="n">aln</span><span class="p">[</span><span class="n">i</span><span class="p">,:]</span> <span class="o">!=</span> <span class="s1">&#39;_&#39;</span><span class="p">])</span>
+        <span class="n">full_chain</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">aln</span><span class="p">[</span><span class="n">i</span><span class="p">,:])</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39;_&#39;</span><span class="p">,</span> <span class="s1">&#39; &#39;</span><span class="p">)</span><span class="o">.</span><span class="n">lstrip</span><span class="p">()</span><span class="o">.</span><span class="n">rstrip</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">full_chain</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39; &#39;</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">)</span> <span class="o">!=</span> <span class="n">full_chain</span><span class="p">:</span>
+            <span class="n">faulty_pattern</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">a</span><span class="p">)</span>
+
+    <span class="c1"># update domain table</span>
+    <span class="n">faulty_seq</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">dom_table</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">()</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">np</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span><span class="n">domain_table</span><span class="p">[</span><span class="s1">&#39;seq_id&#39;</span><span class="p">]):</span>
+        <span class="n">sub</span> <span class="o">=</span> <span class="n">domain_table</span><span class="p">[</span><span class="n">domain_table</span><span class="o">.</span><span class="n">seq_id</span> <span class="o">==</span> <span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">sort_values</span><span class="p">(</span><span class="n">start_nm</span><span class="p">)</span>
+        <span class="n">intersect</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">sub</span><span class="p">[</span><span class="n">dcol</span><span class="p">])</span> <span class="o">&amp;</span> <span class="nb">set</span><span class="p">(</span><span class="n">dup_check</span><span class="p">))</span>
+        <span class="n">pt</span> <span class="o">=</span> <span class="s1">&#39;=&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">sub</span><span class="p">[</span><span class="n">dcol</span><span class="p">]))</span>
+        <span class="k">if</span> <span class="n">pt</span> <span class="ow">in</span> <span class="n">faulty_pattern</span><span class="p">:</span>
+            <span class="n">faulty_seq</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">i</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">intersect</span><span class="p">:</span>
+            <span class="n">sub</span><span class="p">[</span><span class="n">dcol</span><span class="p">]</span> <span class="o">=</span> <span class="n">dup</span><span class="p">[</span><span class="n">pt</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;=&#39;</span><span class="p">)</span>
+        <span class="n">dom_table</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">([</span><span class="n">dom_table</span><span class="p">,</span> <span class="n">sub</span><span class="p">],</span> <span class="n">ignore_index</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">dom_table</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">dom_table</span><span class="p">)</span>
+
+    <span class="c1"># check if chain still valid after removing gapped seq</span>
+    <span class="k">if</span> <span class="n">faulty_seq</span><span class="p">:</span>
+        <span class="n">sub_dom_table</span> <span class="o">=</span> <span class="n">dom_table</span><span class="p">[</span><span class="o">~</span> <span class="n">dom_table</span><span class="p">[</span><span class="s1">&#39;seq_id&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">isin</span><span class="p">(</span><span class="n">faulty_seq</span><span class="p">)]</span>
+        <span class="n">extra</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">setdiff1d</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">chain</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">sub_dom_table</span><span class="p">[</span><span class="n">dcol</span><span class="p">])))</span>
+        <span class="n">new_chain</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">ch</span> <span class="ow">in</span> <span class="n">chain</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">ch</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">extra</span><span class="p">:</span>
+                <span class="n">new_chain</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">ch</span><span class="p">)</span>
+        <span class="n">chain</span> <span class="o">=</span> <span class="n">new_chain</span>
+    <span class="c1"># also check domain table</span>
+    <span class="n">dom_table</span> <span class="o">=</span> <span class="n">dom_table</span><span class="p">[</span><span class="n">dom_table</span><span class="p">[</span><span class="s1">&#39;clan&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">isin</span><span class="p">(</span><span class="n">chain</span><span class="p">)]</span>
+
+    <span class="c1"># add chain linker</span>
+    <span class="n">chain_link</span> <span class="o">=</span> <span class="n">add_linker_to_chain</span><span class="p">(</span><span class="n">chain</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">chain_link</span><span class="p">,</span> <span class="n">dom_table</span><span class="p">,</span> <span class="n">faulty_seq</span></div>
+
+
+<div class="viewcode-block" id="get_chain"><a class="viewcode-back" href="../API/contents.html#chain.get_chain">[docs]</a><span class="k">def</span> <span class="nf">get_chain</span><span class="p">(</span><span class="n">domain_table</span><span class="p">,</span> <span class="n">dcol</span><span class="o">=</span><span class="s1">&#39;clan&#39;</span><span class="p">,</span> <span class="n">start_nm</span><span class="o">=</span><span class="s1">&#39;env_start&#39;</span><span class="p">,</span> <span class="n">end_nm</span><span class="o">=</span><span class="s1">&#39;env_end&#39;</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;(deprecated) Get Clan chain from domain annotation.</span>
+
+<span class="sd">    Note:</span>
+<span class="sd">        Domain sorted according to mean center across all sequences.</span>
+<span class="sd">        Use IQR to filter outlier (if sequences containing domain &lt;=3, don&#39;t do).</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">df</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">np</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span><span class="n">domain_table</span><span class="p">[</span><span class="n">dcol</span><span class="p">]):</span>
+        <span class="n">sub</span> <span class="o">=</span> <span class="n">domain_table</span><span class="p">[</span><span class="n">domain_table</span><span class="p">[</span><span class="n">dcol</span><span class="p">]</span> <span class="o">==</span> <span class="n">i</span><span class="p">]</span>
+        <span class="n">center</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">sub</span><span class="p">[[</span><span class="n">start_nm</span><span class="p">,</span> <span class="n">end_nm</span><span class="p">]],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">center</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">2</span><span class="p">:</span>
+            <span class="n">Q1</span><span class="p">,</span> <span class="n">Q3</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">percentile</span><span class="p">(</span><span class="n">center</span><span class="p">,</span> <span class="mi">25</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">percentile</span><span class="p">(</span><span class="n">center</span><span class="p">,</span> <span class="mi">75</span><span class="p">)</span>
+            <span class="n">IQR</span> <span class="o">=</span> <span class="n">Q3</span> <span class="o">-</span> <span class="n">Q1</span>
+            <span class="n">upper</span><span class="p">,</span> <span class="n">lower</span> <span class="o">=</span> <span class="n">center</span> <span class="o">&gt;=</span> <span class="p">(</span><span class="n">Q3</span> <span class="o">+</span> <span class="mf">1.5</span> <span class="o">*</span> <span class="n">IQR</span><span class="p">),</span> <span class="n">center</span> <span class="o">&lt;=</span> <span class="p">(</span><span class="n">Q1</span> <span class="o">-</span> <span class="mf">1.5</span> <span class="o">*</span> <span class="n">IQR</span><span class="p">)</span>
+            <span class="n">mn</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">center</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">logical_not</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">logical_or</span><span class="p">(</span><span class="n">upper</span><span class="p">,</span> <span class="n">lower</span><span class="p">))])</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">mn</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">center</span><span class="p">)</span>
+        <span class="n">df</span><span class="o">.</span><span class="n">append</span><span class="p">({</span><span class="s1">&#39;group&#39;</span><span class="p">:</span> <span class="n">i</span><span class="p">,</span> <span class="s1">&#39;mean_pos&#39;</span><span class="p">:</span> <span class="n">mn</span><span class="p">})</span>
+    <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">df</span><span class="p">)</span>
+    <span class="n">df</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">sort_values</span><span class="p">(</span><span class="s1">&#39;mean_pos&#39;</span><span class="p">)</span>
+    <span class="n">chain</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">df</span><span class="p">[</span><span class="s1">&#39;group&#39;</span><span class="p">])</span>
+    <span class="n">chain_link</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">ct</span> <span class="o">=</span> <span class="mi">1</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">chain</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">chain</span><span class="p">)):</span>
+            <span class="n">chain_link</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">chain</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
+            <span class="n">chain_link</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s1">&#39;_link_&#39;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">ct</span><span class="p">))</span>
+            <span class="n">ct</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="n">chain_link</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;_N&#39;</span><span class="p">]</span> <span class="o">+</span> <span class="n">chain_link</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="p">[</span><span class="s1">&#39;_C&#39;</span><span class="p">]</span>  <span class="c1"># two overhang</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">chain_link</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;_N&#39;</span><span class="p">]</span> <span class="o">+</span> <span class="n">chain</span> <span class="o">+</span> <span class="p">[</span><span class="s1">&#39;_C&#39;</span><span class="p">]</span>
+    <span class="k">return</span> <span class="n">chain_link</span></div>
+
+
+<div class="viewcode-block" id="check_linker_in_domain"><a class="viewcode-back" href="../API/contents.html#chain.check_linker_in_domain">[docs]</a><span class="k">def</span> <span class="nf">check_linker_in_domain</span><span class="p">(</span><span class="n">dom</span><span class="p">,</span> <span class="n">test_seqs</span><span class="p">,</span> <span class="n">direction</span><span class="o">=</span><span class="s1">&#39;start&#39;</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Check if the linker has potential sequence in the domain.</span>
+<span class="sd">    </span>
+<span class="sd">    Args:</span>
+<span class="sd">        dom (list): domain set(s) to test.</span>
+<span class="sd">        seqs (dict): set of linker segment sequences to test.</span>
+<span class="sd">        direction (str): either start or end of the test sequence may overlap</span>
+<span class="sd">            with the domain sequences.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">MIN_ALN</span> <span class="o">=</span> <span class="mi">10</span>  <span class="c1"># minimum aligned count define linker-domain overlap</span>
+    <span class="k">if</span> <span class="n">direction</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">[</span><span class="s1">&#39;start&#39;</span><span class="p">,</span> <span class="s1">&#39;end&#39;</span><span class="p">]:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Direction must be either start or end.&#39;</span><span class="p">)</span>
+    
+    <span class="n">profile</span> <span class="o">=</span> <span class="n">align_block</span><span class="p">(</span><span class="n">dom</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s1">&#39;single&#39;</span><span class="p">)</span>
+    <span class="n">idx</span> <span class="o">=</span> <span class="n">profile</span><span class="p">[:,</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">re</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="s1">&#39;(\w)&#39;</span><span class="p">,</span> <span class="n">profile</span><span class="p">[:,</span><span class="mi">0</span><span class="p">])</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">1</span><span class="p">))</span>
+    <span class="n">master_seq</span> <span class="o">=</span> <span class="n">profile</span><span class="p">[</span><span class="n">idx</span><span class="p">,:]</span>
+    
+    <span class="c1"># get the profile block in the profile2seq alignment</span>
+    <span class="n">aln</span> <span class="o">=</span> <span class="n">align_block</span><span class="p">(</span><span class="n">test_seqs</span><span class="p">,</span> <span class="n">profile</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s1">&#39;profile&#39;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">direction</span> <span class="o">==</span> <span class="s1">&#39;end&#39;</span><span class="p">:</span>
+        <span class="n">aln</span> <span class="o">=</span> <span class="n">aln</span><span class="p">[::</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">aln</span><span class="p">)):</span>
+        <span class="k">if</span> <span class="n">aln</span><span class="p">[</span><span class="n">i</span><span class="p">,:]</span><span class="o">.</span><span class="n">id</span> <span class="o">==</span> <span class="n">master_seq</span><span class="o">.</span><span class="n">id</span><span class="p">:</span>
+            <span class="n">idx</span> <span class="o">=</span> <span class="n">i</span>
+    <span class="n">aln_start</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">aln</span><span class="p">[</span><span class="n">idx</span><span class="p">,:]</span><span class="o">.</span><span class="n">seq</span><span class="p">)</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">master_seq</span><span class="o">.</span><span class="n">seq</span><span class="p">)[</span><span class="mi">0</span><span class="p">])</span>
+    
+    <span class="n">test_key</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">test_seqs</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
+    <span class="n">test_idx</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">aln</span><span class="p">)):</span>
+        <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">test_key</span><span class="p">)):</span>
+            <span class="k">if</span> <span class="n">aln</span><span class="p">[</span><span class="n">i</span><span class="p">,:]</span><span class="o">.</span><span class="n">id</span> <span class="o">==</span> <span class="n">test_key</span><span class="p">[</span><span class="n">j</span><span class="p">]:</span>
+                <span class="n">test_idx</span><span class="p">[</span><span class="n">test_key</span><span class="p">[</span><span class="n">j</span><span class="p">]]</span> <span class="o">=</span> <span class="n">i</span>
+                <span class="k">break</span>
+    
+    <span class="c1"># check if the linker really overlaps with the domain</span>
+    <span class="n">out</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">test_key</span><span class="p">:</span>
+        <span class="n">test_in_dom</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">aln</span><span class="p">[</span><span class="n">test_idx</span><span class="p">[</span><span class="n">k</span><span class="p">],</span><span class="n">aln_start</span><span class="p">:</span><span class="n">aln_start</span><span class="o">+</span><span class="n">profile</span><span class="o">.</span>
+                              <span class="n">get_alignment_length</span><span class="p">()]</span><span class="o">.</span><span class="n">seq</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">test_in_dom</span><span class="p">)</span> <span class="o">-</span> <span class="n">test_in_dom</span><span class="o">.</span><span class="n">count</span><span class="p">(</span><span class="s1">&#39;-&#39;</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="n">MIN_ALN</span><span class="p">:</span>
+            <span class="n">b4_start</span> <span class="o">=</span> <span class="n">aln</span><span class="p">[</span><span class="n">test_idx</span><span class="p">[</span><span class="n">k</span><span class="p">],:</span><span class="n">aln_start</span><span class="p">]</span>
+            <span class="n">idx</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">b4_start</span><span class="p">)</span> <span class="o">-</span> <span class="nb">str</span><span class="p">(</span><span class="n">b4_start</span><span class="o">.</span><span class="n">seq</span><span class="p">)</span><span class="o">.</span><span class="n">count</span><span class="p">(</span><span class="s1">&#39;-&#39;</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">direction</span> <span class="o">==</span> <span class="s1">&#39;end&#39;</span><span class="p">:</span>
+                <span class="n">idx</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">aln</span><span class="p">[</span><span class="n">test_idx</span><span class="p">[</span><span class="n">k</span><span class="p">],:]</span><span class="o">.</span><span class="n">seq</span><span class="p">)</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39;-&#39;</span><span class="p">,</span><span class="s1">&#39;&#39;</span><span class="p">))</span> <span class="o">-</span> <span class="n">idx</span>
+            <span class="n">out</span><span class="o">.</span><span class="n">append</span><span class="p">({</span><span class="s1">&#39;id&#39;</span><span class="p">:</span><span class="n">k</span><span class="p">,</span> <span class="s1">&#39;idx&#39;</span><span class="p">:</span><span class="n">idx</span><span class="p">})</span>
+    <span class="k">return</span> <span class="n">out</span></div>
+
+
+<div class="viewcode-block" id="refine_linker"><a class="viewcode-back" href="../API/contents.html#chain.refine_linker">[docs]</a><span class="k">def</span> <span class="nf">refine_linker</span><span class="p">(</span><span class="n">domain_set</span><span class="p">,</span> <span class="n">linker_set</span><span class="p">,</span> <span class="n">chain</span><span class="p">,</span> <span class="n">domain_table</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Check if the linker is reasonable. Identify undetected domains.</span>
+<span class="sd">    Then re-partition the domain and linker relationship.</span>
+<span class="sd">    </span>
+<span class="sd">    Args:</span>
+<span class="sd">        domain_set (dict): set of domain segment sequences.</span>
+<span class="sd">        linker_set (dict): set of linker segment sequences.</span>
+<span class="sd">        chain (list): domain chain.</span>
+<span class="sd">        domain_table (pandas.DataFrame): domain annotation table.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">faulty_seq</span> <span class="o">=</span> <span class="p">[]</span> <span class="c1"># align later</span>
+    <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">linker_set</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+        <span class="n">ls</span> <span class="o">=</span> <span class="n">linker_set</span><span class="p">[</span><span class="n">k</span><span class="p">]</span>
+        <span class="n">lk_len</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span><span class="nb">len</span><span class="p">(</span><span class="n">ls</span><span class="p">[</span><span class="n">x</span><span class="p">]),</span> <span class="n">ls</span><span class="o">.</span><span class="n">keys</span><span class="p">()))</span>
+
+        <span class="c1"># If the linker is too long, then the domain annotation may not be reliable.</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">lk_len</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">2</span><span class="p">:</span>
+            <span class="n">Q1</span><span class="p">,</span> <span class="n">Q3</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">percentile</span><span class="p">(</span><span class="n">lk_len</span><span class="p">,</span> <span class="mi">25</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">percentile</span><span class="p">(</span><span class="n">lk_len</span><span class="p">,</span> <span class="mi">75</span><span class="p">)</span>
+            <span class="n">IQR</span> <span class="o">=</span> <span class="n">Q3</span> <span class="o">-</span> <span class="n">Q1</span>
+            <span class="n">upper</span> <span class="o">=</span> <span class="n">lk_len</span> <span class="o">&gt;=</span> <span class="p">(</span><span class="n">Q3</span> <span class="o">+</span> <span class="mf">1.5</span> <span class="o">*</span> <span class="n">IQR</span><span class="p">)</span>
+            <span class="n">outlier</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">ls</span><span class="o">.</span><span class="n">keys</span><span class="p">()))[</span><span class="n">upper</span><span class="p">])</span>
+
+            <span class="c1"># If in the chain, the adjacent block is detected for these outliers, then the seq is still reliable.</span>
+            <span class="n">outlier_val</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="k">for</span> <span class="n">o</span> <span class="ow">in</span> <span class="n">outlier</span><span class="p">:</span>
+                <span class="n">cidx</span> <span class="o">=</span> <span class="n">chain</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">k</span><span class="p">)</span>
+                <span class="n">check_block</span> <span class="o">=</span> <span class="p">[]</span>
+                <span class="k">if</span> <span class="n">cidx</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
+                    <span class="n">check_block</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">chain</span><span class="p">[</span><span class="n">cidx</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
+                <span class="k">if</span> <span class="n">cidx</span> <span class="o">!=</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">chain</span><span class="p">)</span><span class="o">-</span><span class="mi">1</span><span class="p">):</span>
+                    <span class="n">check_block</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">chain</span><span class="p">[</span><span class="n">cidx</span><span class="o">+</span><span class="mi">1</span><span class="p">])</span>
+
+                <span class="n">detected_dom</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">domain_table</span><span class="p">[</span><span class="n">domain_table</span><span class="p">[</span><span class="s1">&#39;seq_id&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="n">o</span><span class="p">]</span><span class="o">.</span><span class="n">clan</span><span class="p">)</span>
+                <span class="k">if</span> <span class="nb">len</span><span class="p">([</span><span class="n">j</span> <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="n">check_block</span> <span class="k">if</span> <span class="n">j</span> <span class="ow">in</span> <span class="n">detected_dom</span><span class="p">])</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="n">check_block</span><span class="p">):</span>
+                    <span class="n">outlier_val</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">o</span><span class="p">)</span>
+
+            <span class="n">outlier</span> <span class="o">=</span> <span class="n">outlier_val</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+            <span class="n">faulty_seq</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">outlier</span><span class="p">)</span>
+
+            <span class="c1"># TODO: alternatively, refine domain and linker?</span>
+            <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">            if len(outlier) &gt; 0:</span>
+<span class="sd">                idx = chain.index(k)</span>
+<span class="sd">                seq_to_test = {}</span>
+<span class="sd">                for ol in outlier:</span>
+<span class="sd">                    seq_to_test[ol] = ls[ol]</span>
+<span class="sd">                if idx != len(chain)-1:</span>
+<span class="sd">                    # overlap with the next domain</span>
+<span class="sd">                    fwd = check_linker_in_domain(domain_set[chain[idx+1]], </span>
+<span class="sd">                                                 seq_to_test, direction=&#39;start&#39;)</span>
+<span class="sd">                if idx != 0:</span>
+<span class="sd">                    # overlap with the last domain</span>
+<span class="sd">                    back = check_linker_in_domain(domain_set[chain[idx-1]], </span>
+<span class="sd">                                                  seq_to_test, direction=&#39;end&#39;)</span>
+<span class="sd">            &quot;&quot;&quot;</span>
+
+    <span class="c1"># remove unreliable sequences from the alignment blocks</span>
+    <span class="k">for</span> <span class="n">fs</span> <span class="ow">in</span> <span class="n">faulty_seq</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">dom</span> <span class="ow">in</span> <span class="n">domain_set</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+            <span class="k">if</span> <span class="n">fs</span> <span class="ow">in</span> <span class="n">domain_set</span><span class="p">[</span><span class="n">dom</span><span class="p">]</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+                <span class="k">del</span> <span class="n">domain_set</span><span class="p">[</span><span class="n">dom</span><span class="p">][</span><span class="n">fs</span><span class="p">]</span>
+        <span class="k">for</span> <span class="n">lnk</span> <span class="ow">in</span> <span class="n">linker_set</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+            <span class="k">if</span> <span class="n">fs</span> <span class="ow">in</span> <span class="n">linker_set</span><span class="p">[</span><span class="n">lnk</span><span class="p">]</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+                <span class="k">del</span> <span class="n">linker_set</span><span class="p">[</span><span class="n">lnk</span><span class="p">][</span><span class="n">fs</span><span class="p">]</span>
+
+    <span class="c1"># check if there is any chain or linker missing after removing faulty_seq</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">chain</span><span class="p">)):</span>
+        <span class="k">if</span> <span class="n">chain</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;_&#39;</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">linker_set</span><span class="p">[</span><span class="n">chain</span><span class="p">[</span><span class="n">i</span><span class="p">]])</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="k">del</span> <span class="n">linker_set</span><span class="p">[</span><span class="n">chain</span><span class="p">[</span><span class="n">i</span><span class="p">]]</span>
+                <span class="n">chain</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;null&#39;</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">domain_set</span><span class="p">[</span><span class="n">chain</span><span class="p">[</span><span class="n">i</span><span class="p">]])</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="k">del</span> <span class="n">domain_set</span><span class="p">[</span><span class="n">chain</span><span class="p">[</span><span class="n">i</span><span class="p">]]</span>
+                <span class="n">chain</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;null&#39;</span>
+
+    <span class="k">return</span> <span class="n">faulty_seq</span><span class="p">,</span> <span class="n">domain_set</span><span class="p">,</span> <span class="n">linker_set</span><span class="p">,</span> <span class="n">chain</span></div>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Yifan Gui.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
